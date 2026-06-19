@@ -10,8 +10,10 @@ MANDATORY_KEYS = [
     "PERFECT",
 ]
 
+ERROR_MSG = "Aborted: Bad Configuration File"
 
-def parse_config(file_name: str) -> tuple[bool, dict[str, str]]:
+
+def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
 
     if not os.path.isfile(file_name):
         return (False, {})
@@ -70,3 +72,21 @@ def is_valid_dict(conf: dict[str, Any]) -> bool:
         return False
 
     return True
+
+
+def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
+    initial_parse_result = parse_file(file_name)
+    if not initial_parse_result[0]:
+        print(ERROR_MSG)
+        return (False, {})
+
+    converted_parse_result = convert_config_data(initial_parse_result[1])
+    if not converted_parse_result[0]:
+        print(ERROR_MSG)
+        return (False, {})
+
+    if not is_valid_dict(converted_parse_result[1]):
+        print(ERROR_MSG)
+        return (False, {})
+
+    return (True, {})
