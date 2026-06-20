@@ -1,18 +1,123 @@
 import random
-from .utils.patterns import get_pattern_42
+
+from mlx import Mlx
+from utils.patterns import get_pattern_42
+
+WIDTH = 800
+HEIGHT = 600
+
+NORTH = 1 << 0
+EAST = 1 << 1
+SOUTH = 1 << 2
+WEST = 1 << 3
+
+
+def visualize_maze(maze, width=800, height=600):
+    rows = len(maze)
+    cols = len(maze[0])
+
+    cell_size = min(width // (cols + 2), height // (rows + 2))
+
+    m = Mlx()
+    p = m.mlx_init()
+
+    win = m.mlx_new_window(p, width, height, "Maze Viewer")
+
+    img = m.mlx_new_image(p, width, height)
+
+    img_data, bpp, line_size, endian = m.mlx_get_data_addr(img)
+
+    def put_pixel(x, y, r=255, g=255, b=255):
+        if not (0 <= x < width and 0 <= y < height):
+            return
+
+        idx = y * line_size + x * (bpp // 8)
+
+        img_data[idx] = b
+        img_data[idx + 1] = g
+        img_data[idx + 2] = r
+        img_data[idx + 3] = 255
+
+    def draw_line(x0, y0, x1, y1, r=255, g=255, b=255):
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+
+        err = dx - dy
+
+        while True:
+            put_pixel(x0, y0, r, g, b)
+
+            if x0 == x1 and y0 == y1:
+                break
+
+            e2 = err * 2
+
+            if e2 > -dy:
+                err -= dy
+                x0 += sx
+
+            if e2 < dx:
+                err += dx
+                y0 += sy
+
+    maze_w = cols * cell_size
+    maze_h = rows * cell_size
+
+    offset_x = (width - maze_w) // 2
+    offset_y = (height - maze_h) // 2
+
+    for y in range(rows):
+        for x in range(cols):
+            cell = maze[y][x]
+
+            x0 = offset_x + x * cell_size
+            y0 = offset_y + y * cell_size
+
+            x1 = x0 + cell_size
+            y1 = y0 + cell_size
+
+            if cell & NORTH:
+                draw_line(x0, y0, x1, y0)
+
+            if cell & EAST:
+                draw_line(x1, y0, x1, y1)
+
+            if cell & SOUTH:
+                draw_line(x0, y1, x1, y1)
+
+            if cell & WEST:
+                draw_line(x0, y0, x0, y1)
+
+    m.mlx_put_image_to_window(p, win, img, 0, 0)
+
+    m.mlx_do_sync(p)
+
+    def cleanup():
+        m.mlx_destroy_image(p, img)
+        m.mlx_destroy_window(p, win)
+        m.mlx_loop_exit(p)
+
+    def on_key(keynum, param):
+        if keynum == 65307:
+            cleanup()
+
+    def on_close(param):
+        cleanup()
+
+    m.mlx_key_hook(win, on_key, None)
+    m.mlx_hook(win, 33, 0, on_close, None)
+
+    m.mlx_loop(p)
 
 
 def generate_maze_dfs(
-        width: int, height: int,
-        entry: tuple[int, int]
-        ) -> list[list[int]]:
+    width: int, height: int, entry: tuple[int, int]
+) -> list[list[int]]:
     grid = [[15 for _ in range(width)] for _ in range(height)]
-    directions = [
-            (0, 0, -1),
-            (1, 1, 0),
-            (2, 0, 1),
-            (3, -1, 0)
-            ]
+    directions = [(0, 0, -1), (1, 1, 0), (2, 0, 1), (3, -1, 0)]
     stack = [entry]
     visited = {entry}
     blocked_area = get_pattern_42(width, height)
@@ -29,8 +134,10 @@ def generate_maze_dfs(
             nx = x + dx
             ny = y + dy
             if (
-                nx >= 0 and nx < width
-                and ny >= 0 and ny < height
+                nx >= 0
+                and nx < width
+                and ny >= 0
+                and ny < height
                 and (nx, ny) not in visited
             ):
                 valid_neighbors.append((bit_pos, nx, ny))
@@ -42,8 +149,8 @@ def generate_maze_dfs(
 
         bit_pos, nx, ny = new
         opposit_bit_pos = (bit_pos + 2) % 4
-        grid[y][x] ^= (1 << bit_pos)
-        grid[ny][nx] ^= (1 << opposit_bit_pos)
+        grid[y][x] ^= 1 << bit_pos
+        grid[ny][nx] ^= 1 << opposit_bit_pos
 
         stack.append((nx, ny))
         visited.add((nx, ny))
@@ -52,9 +159,7 @@ def generate_maze_dfs(
 
 
 def print_ascii_maze(
-    grid: list[list[int]],
-    entry: tuple[int, int],
-    exit_coord: tuple[int, int]
+    grid: list[list[int]], entry: tuple[int, int], exit_coord: tuple[int, int]
 ) -> None:
     """
     grid データを読み込み、壁を『#』、通路を『  』で描きつつ、
@@ -84,10 +189,8 @@ def print_ascii_maze(
                 for dy in [-1, 0, 1]:
                     for dx in [-1, 0, 1]:
                         canvas[cy + dy][cx + dx] = "██"
-                continue           # 中心を通路（空白）にする
+                continue  # 中心を通路（空白）にする
             canvas[cy][cx] = "  "
-
-           
 
             # 各方向のビットをチェックして壁をぶち抜く
             if not (cell_value & (1 << 0)):  # 北
@@ -114,8 +217,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 10
-    height = 11
+    width = 100
+    height = 100
     entry = (0, 0)
     # 出口を右下のマスに設定
     exit_coord = (width - 1, height - 1)
@@ -129,6 +232,7 @@ if __name__ == "__main__":
     print(f"--- Generating Maze ({width} x {height}) ---")
     generated_grid = generate_maze_dfs(width, height, entry)
 
-    print("\n--- Visualized ASCII Maze ---")
+    # print("\n--- Visualized ASCII Maze ---")
     # 引数に入口と出口を足して呼び出す
-    print_ascii_maze(generated_grid, entry, exit_coord)
+    # print_ascii_maze(generated_grid, entry, exit_coord)
+    visualize_maze(generated_grid)

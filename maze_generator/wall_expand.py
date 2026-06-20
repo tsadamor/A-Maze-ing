@@ -1,6 +1,117 @@
 import random
 from enum import IntEnum
-from .utils.patterns import get_pattern_42
+
+from mlx import Mlx
+from utils.patterns import get_pattern_42
+
+WIDTH = 800
+HEIGHT = 600
+
+NORTH = 1 << 0
+EAST = 1 << 1
+SOUTH = 1 << 2
+WEST = 1 << 3
+
+
+def visualize_maze(maze, width=800, height=600):
+    rows = len(maze)
+    cols = len(maze[0])
+
+    cell_size = min(width // (cols + 2), height // (rows + 2))
+
+    m = Mlx()
+    p = m.mlx_init()
+
+    win = m.mlx_new_window(p, width, height, "Maze Viewer")
+
+    img = m.mlx_new_image(p, width, height)
+
+    img_data, bpp, line_size, endian = m.mlx_get_data_addr(img)
+
+    def put_pixel(x, y, r=255, g=255, b=255):
+        if not (0 <= x < width and 0 <= y < height):
+            return
+
+        idx = y * line_size + x * (bpp // 8)
+
+        img_data[idx] = b
+        img_data[idx + 1] = g
+        img_data[idx + 2] = r
+        img_data[idx + 3] = 255
+
+    def draw_line(x0, y0, x1, y1, r=255, g=255, b=255):
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+
+        err = dx - dy
+
+        while True:
+            put_pixel(x0, y0, r, g, b)
+
+            if x0 == x1 and y0 == y1:
+                break
+
+            e2 = err * 2
+
+            if e2 > -dy:
+                err -= dy
+                x0 += sx
+
+            if e2 < dx:
+                err += dx
+                y0 += sy
+
+    maze_w = cols * cell_size
+    maze_h = rows * cell_size
+
+    offset_x = (width - maze_w) // 2
+    offset_y = (height - maze_h) // 2
+
+    for y in range(rows):
+        for x in range(cols):
+            cell = maze[y][x]
+
+            x0 = offset_x + x * cell_size
+            y0 = offset_y + y * cell_size
+
+            x1 = x0 + cell_size
+            y1 = y0 + cell_size
+
+            if cell & NORTH:
+                draw_line(x0, y0, x1, y0)
+
+            if cell & EAST:
+                draw_line(x1, y0, x1, y1)
+
+            if cell & SOUTH:
+                draw_line(x0, y1, x1, y1)
+
+            if cell & WEST:
+                draw_line(x0, y0, x0, y1)
+
+    m.mlx_put_image_to_window(p, win, img, 0, 0)
+
+    m.mlx_do_sync(p)
+
+    def cleanup():
+        m.mlx_destroy_image(p, img)
+        m.mlx_destroy_window(p, win)
+        m.mlx_loop_exit(p)
+
+    def on_key(keynum, param):
+        if keynum == 65307:
+            cleanup()
+
+    def on_close(param):
+        cleanup()
+
+    m.mlx_key_hook(win, on_key, None)
+    m.mlx_hook(win, 33, 0, on_close, None)
+
+    m.mlx_loop(p)
 
 
 class Direction(IntEnum):
@@ -158,8 +269,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 7
-    height = 7
+    width = 10
+    height = 10
     entry = (0, 0)
     exit_coord = (width - 1, height - 1)
 
@@ -171,18 +282,6 @@ if __name__ == "__main__":
     print(f"--- Generating Wall-Expand Maze ({width} x {height}) ---")
     generated_maze = gen_maze_wall_expand(width, height)
 
-    print("\n--- Visualized ASCII Maze ---")
-    print_ascii_maze(generated_maze, entry, exit_coord)
-
-    hex_char = "0123456789ABCDEF"
-    with open("maze.txt", "w", encoding="utf-8") as f:
-        for h in range(height):
-            for w in range(width):
-                print(hex_char[generated_maze[h][w]], end="", file=f)
-            print(file=f)
-
-        print(file=f)
-        print(f"{entry[0]},{entry[1]}", file=f)
-        print(f"{exit_coord[0]},{exit_coord[1]}", file=f)
-        solve_res = maze_solver(generated_maze, width, height, entry, exit_coord)
-        print(solve_res, file=f)
+    # print("\n--- Visualized ASCII Maze ---")
+    # print_ascii_maze(generated_maze, entry, exit_coord)
+    visualize_maze(generated_maze, 1000, 800)
