@@ -1,5 +1,5 @@
 import random
-from utils.patterns import get_pattern_42
+from .utils.patterns import get_pattern_42
 
 
 def generate_maze_dfs(

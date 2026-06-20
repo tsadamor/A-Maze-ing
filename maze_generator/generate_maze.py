@@ -10,15 +10,14 @@ class MazeGenerator:
         self.exit = config["EXIT"]
         self.output_file = config["OUTPUT_FILE"]
         self.perfect = config["PERFECT"]
-        self.maze = []
 
     def generate_maze(self) -> None:
         if self.perfect:
             self.maze = generate_maze_dfs(self.width, self.height, self.entry)
         else:
-            self.maze = gen_maze_wall_expand(self.width, self.height, self.entry)
+            self.maze = gen_maze_wall_expand(self.width, self.height)
 
-    def save_to_files(self) -> None:
+    def save_maze_to_file(self) -> None:
         if not self.maze:
             return
 
