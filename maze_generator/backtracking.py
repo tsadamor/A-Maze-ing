@@ -42,8 +42,8 @@ def backtracking(
 
         bit_pos, nx, ny = new
         opposit_bit_pos = (bit_pos + 2) % 4
-        grid[y][x] -= (1 << bit_pos)
-        grid[ny][nx] -= (1 << opposit_bit_pos)
+        grid[y][x] ^= (1 << bit_pos)
+        grid[ny][nx] ^= (1 << opposit_bit_pos)
 
         stack.append((nx, ny))
         visited.add((nx, ny))
