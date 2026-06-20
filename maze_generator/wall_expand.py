@@ -1,5 +1,6 @@
 import random
 from enum import IntEnum
+from utils.patterns import get_pattern_42
 
 
 class Direction(IntEnum):
@@ -12,6 +13,23 @@ class Direction(IntEnum):
 def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
     maze = [[0] * width for _ in range(height)]
     connected_pillars = set()
+
+    blocked_cells = get_pattern_42(width, height)
+    if blocked_cells:
+        for cx, cy in blocked_cells:
+            connected_pillars.update([
+                (cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)
+            ])
+            maze[cy][cx] = 15
+
+            if cy > 0:
+                maze[cy - 1][cx] |= Direction.SOUTH  # 北側のマスの「南壁」
+            if cy < height - 1:
+                maze[cy + 1][cx] |= Direction.NORTH  # 南側のマスの「北壁」
+            if cx > 0:
+                maze[cy][cx - 1] |= Direction.EAST   # 西側のマスの「東壁」
+            if cx < width - 1:
+                maze[cy][cx + 1] |= Direction.WEST
 
     for w in range(width):
         maze[0][w] |= Direction.NORTH
@@ -84,3 +102,75 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
                 break
 
     return maze
+
+def print_ascii_maze(
+    grid: list[list[int]],
+    entry: tuple[int, int],
+    exit_coord: tuple[int, int]
+) -> None:
+    if not grid:
+        return
+
+    height = len(grid)
+    width = len(grid[0])
+
+    canvas_height = 2 * height + 1
+    canvas_width = 2 * width + 1
+    canvas = [["##" for _ in range(canvas_width)] for _ in range(canvas_height)]
+
+    for y in range(height):
+        for x in range(width):
+            cy = 2 * y + 1
+            cx = 2 * x + 1
+
+            cell_value = grid[y][x]
+
+            # 完全に閉じられた42の岩盤（15）なら、周囲3x3を含めて ██ で上書き
+            if cell_value == 15:
+                for dy in [-1, 0, 1]:
+                    for dx in [-1, 0, 1]:
+                        canvas[cy + dy][cx + dx] = "██"
+                continue
+
+            # 普通の通路の床
+            canvas[cy][cx] = "  "
+
+            # 各方向のビットを見て、壁がない（0）なら通路（空白）にする
+            if not (cell_value & Direction.NORTH):
+                canvas[cy - 1][cx] = "  "
+            if not (cell_value & Direction.EAST):
+                canvas[cy][cx + 1] = "  "
+            if not (cell_value & Direction.SOUTH):
+                canvas[cy + 1][cx] = "  "
+            if not (cell_value & Direction.WEST):
+                canvas[cy][cx - 1] = "  "
+
+    # 入口と出口を上書き
+    entry_x, entry_y = entry
+    exit_x, exit_y = exit_coord
+    canvas[2 * entry_y + 1][2 * entry_x + 1] = "ST"
+    canvas[2 * exit_y + 1][2 * exit_x + 1] = "ED"
+
+    for row in canvas:
+        print("".join(row))
+
+
+# 💡【ここを追加！】単体テスト用のメイン処理
+if __name__ == "__main__":
+    import sys
+
+    width = 35
+    height = 20
+    entry = (0, 0)
+    exit_coord = (width - 1, height - 1)
+
+    if len(sys.argv) == 3:
+        width = int(sys.argv[1])
+        height = int(sys.argv[2])
+        exit_coord = (width - 1, height - 1)
+
+    print(f"--- Generating Wall-Expand Maze ({width} x {height}) ---")
+    generated_maze = gen_maze_wall_expand(width, height)
+
+    print("\n--- Visualized ASCII Maze ---")
+    print_ascii_maze(generated_maze, entry, exit_coord)

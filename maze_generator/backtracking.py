@@ -1,5 +1,5 @@
 import random
-import patterns
+from utils.patterns import get_pattern_42
 
 
 def backtracking(
@@ -15,7 +15,7 @@ def backtracking(
             ]
     stack = [entry]
     visited = {entry}
-    blocked_area = patterns.get_pattern_42(width, height)
+    blocked_area = get_pattern_42(width, height)
 
     if blocked_area:
         visited.update(blocked_area)
