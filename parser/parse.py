@@ -89,4 +89,4 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
         print(ERROR_MSG)
         return (False, {})
 
-    return (True, {})
+    return (True, converted_parse_result[1])
