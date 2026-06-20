@@ -1,5 +1,7 @@
 import random
 from enum import IntEnum
+
+from utils import maze_solver
 from utils.patterns import get_pattern_42
 
 
@@ -17,9 +19,9 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
     blocked_cells = get_pattern_42(width, height)
     if blocked_cells:
         for cx, cy in blocked_cells:
-            connected_pillars.update([
-                (cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)
-            ])
+            connected_pillars.update(
+                [(cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)]
+            )
             maze[cy][cx] = 15
 
             if cy > 0:
@@ -27,7 +29,7 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
             if cy < height - 1:
                 maze[cy + 1][cx] |= Direction.NORTH  # 南側のマスの「北壁」
             if cx > 0:
-                maze[cy][cx - 1] |= Direction.EAST   # 西側のマスの「東壁」
+                maze[cy][cx - 1] |= Direction.EAST  # 西側のマスの「東壁」
             if cx < width - 1:
                 maze[cy][cx + 1] |= Direction.WEST
 
@@ -103,10 +105,9 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
 
     return maze
 
+
 def print_ascii_maze(
-    grid: list[list[int]],
-    entry: tuple[int, int],
-    exit_coord: tuple[int, int]
+    grid: list[list[int]], entry: tuple[int, int], exit_coord: tuple[int, int]
 ) -> None:
     if not grid:
         return
@@ -159,8 +160,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 35
-    height = 20
+    width = 7
+    height = 7
     entry = (0, 0)
     exit_coord = (width - 1, height - 1)
 
@@ -174,3 +175,16 @@ if __name__ == "__main__":
 
     print("\n--- Visualized ASCII Maze ---")
     print_ascii_maze(generated_maze, entry, exit_coord)
+
+    hex_char = "0123456789ABCDEF"
+    with open("maze.txt", "w", encoding="utf-8") as f:
+        for h in range(height):
+            for w in range(width):
+                print(hex_char[generated_maze[h][w]], end="", file=f)
+            print(file=f)
+
+        print(file=f)
+        print(f"{entry[0]},{entry[1]}", file=f)
+        print(f"{exit_coord[0]},{exit_coord[1]}", file=f)
+        solve_res = maze_solver(generated_maze, width, height, entry, exit_coord)
+        print(solve_res, file=f)
