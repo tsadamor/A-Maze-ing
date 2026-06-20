@@ -51,6 +51,8 @@ def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
         elif key == "PERFECT":
             is_perfect = value.lower() in ["true", "1", "yes"]
             converted_res[key] = is_perfect
+        else:
+            converted_res[key] = value
     return (True, converted_res)
 
 
@@ -89,4 +91,4 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
         print(ERROR_MSG)
         return (False, {})
 
-    return (True, {})
+    return (True, converted_parse_result[1])

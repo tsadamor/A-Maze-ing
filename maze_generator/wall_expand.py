@@ -1,8 +1,6 @@
 import random
 from enum import IntEnum
-
-from utils import maze_solver
-from utils.patterns import get_pattern_42
+from .utils.patterns import get_pattern_42
 
 
 class Direction(IntEnum):

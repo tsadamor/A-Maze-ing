@@ -1,8 +1,8 @@
 import random
-from utils.patterns import get_pattern_42
+from .utils.patterns import get_pattern_42
 
 
-def backtracking(
+def generate_maze_dfs(
         width: int, height: int,
         entry: tuple[int, int]
         ) -> list[list[int]]:
@@ -114,8 +114,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 35
-    height = 20 
+    width = 10
+    height = 11
     entry = (0, 0)
     # 出口を右下のマスに設定
     exit_coord = (width - 1, height - 1)
@@ -127,9 +127,8 @@ if __name__ == "__main__":
         exit_coord = (width - 1, height - 1)
 
     print(f"--- Generating Maze ({width} x {height}) ---")
-    generated_grid = backtracking(width, height, entry)
+    generated_grid = generate_maze_dfs(width, height, entry)
 
     print("\n--- Visualized ASCII Maze ---")
     # 引数に入口と出口を足して呼び出す
     print_ascii_maze(generated_grid, entry, exit_coord)
-
