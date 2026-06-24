@@ -2,7 +2,8 @@ import random
 from enum import IntEnum
 
 from mlx import Mlx
-from utils.patterns import get_pattern_42
+
+from maze_generator.utils import get_pattern_42
 
 WIDTH = 800
 HEIGHT = 600
@@ -13,11 +14,17 @@ SOUTH = 1 << 2
 WEST = 1 << 3
 
 
-def visualize_maze(maze, width=800, height=600):
+def visualize_maze(maze, width=3000, height=1500):
     rows = len(maze)
     cols = len(maze[0])
-
     cell_size = min(width // (cols + 2), height // (rows + 2))
+
+    maze_w = cols * cell_size
+    maze_h = rows * cell_size
+    offset_x = (width - maze_w) // 2
+    offset_y = (height - maze_h) // 2
+
+    pattern_cells = get_pattern_42(cols, rows)
 
     m = Mlx()
     p = m.mlx_init()
@@ -28,47 +35,74 @@ def visualize_maze(maze, width=800, height=600):
 
     img_data, bpp, line_size, endian = m.mlx_get_data_addr(img)
 
-    def put_pixel(x, y, r=255, g=255, b=255):
-        if not (0 <= x < width and 0 <= y < height):
-            return
+    def put_pixel(cx, cy, thickness=7):
+        # 中心から上下左右にどれくらい太らせるか計算
+        offset = thickness // 2
+        cell_x = int((cx - offset_x) // cell_size)
+        cell_y = int((cy - offset_y) // cell_size)
+        # 元のコードにあったランダムな色の決定
+        # c = min(round(0.06 * (cx + cy)), 255)
+        r, g, b = 0, 200, 200
+        if (cell_x, cell_y) in pattern_cells:
+            r, g, b = 255, 0, 0
 
-        idx = y * line_size + x * (bpp // 8)
+        # 中心(
+        for dy in range(-offset, offset + 1):
+            for dx in range(-offset, offset + 1):
+                x = cx + dx
+                y = cy + dy
 
-        img_data[idx] = b
-        img_data[idx + 1] = g
-        img_data[idx + 2] = r
-        img_data[idx + 3] = 255
+                # 画面外にはみ出ないようにブロック
+                if not (0 <= x < width and 0 <= y < height):
+                    continue
 
+                idx = y * line_size + x * (bpp // 8)
+
+                img_data[idx] = b
+                img_data[idx + 1] = g
+                img_data[idx + 2] = r
+                img_data[idx + 3] = 255
+
+    def fill_rect(rx, ry, rw, rh, r, g, b):
+        for y in range(ry, ry + rh):
+            for x in range(rx, rx + rw):
+                if not (0 <= x < width and 0 <= y < height):
+                    continue
+
+                idx = int(y * line_size + x * (bpp // 8))
+                img_data[idx] = b
+                img_data[idx + 1] = g
+                img_data[idx + 2] = r
+                img_data[idx + 3] = 255
+
+    # === 3. 線を引く関数（put_pixelに色を渡すように修正） ===
     def draw_line(x0, y0, x1, y1, r=255, g=255, b=255):
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
-
         sx = 1 if x0 < x1 else -1
         sy = 1 if y0 < y1 else -1
-
         err = dx - dy
 
         while True:
-            put_pixel(x0, y0, r, g, b)
-
+            put_pixel(x0, y0)  # 色を渡す
             if x0 == x1 and y0 == y1:
                 break
-
             e2 = err * 2
-
             if e2 > -dy:
                 err -= dy
                 x0 += sx
-
             if e2 < dx:
                 err += dx
                 y0 += sy
 
+    # === 4. 描画のメインループ ===
     maze_w = cols * cell_size
     maze_h = rows * cell_size
-
     offset_x = (width - maze_w) // 2
     offset_y = (height - maze_h) // 2
+
+    # 42のパターンの座標を取得（迷路のマス目基準）
+    pattern_cells = get_pattern_42(cols, rows)
 
     for y in range(rows):
         for x in range(cols):
@@ -76,21 +110,25 @@ def visualize_maze(maze, width=800, height=600):
 
             x0 = offset_x + x * cell_size
             y0 = offset_y + y * cell_size
-
             x1 = x0 + cell_size
             y1 = y0 + cell_size
 
+            # 【追加】まず最初に背景（床）を塗る
+            if (x, y) in pattern_cells:
+                # 42の領域なら、マス全体をグレー(180, 180, 180)で塗りつぶす
+                fill_rect(x0, y0, cell_size, cell_size, 255, 0, 0)
+
+            # その後、壁（線）を白で描画する
+            wall_r, wall_g, wall_b = 255, 255, 255
+
             if cell & NORTH:
-                draw_line(x0, y0, x1, y0)
-
+                draw_line(x0, y0, x1, y0, wall_r, wall_g, wall_b)
             if cell & EAST:
-                draw_line(x1, y0, x1, y1)
-
+                draw_line(x1, y0, x1, y1, wall_r, wall_g, wall_b)
             if cell & SOUTH:
-                draw_line(x0, y1, x1, y1)
-
+                draw_line(x0, y1, x1, y1, wall_r, wall_g, wall_b)
             if cell & WEST:
-                draw_line(x0, y0, x0, y1)
+                draw_line(x0, y0, x0, y1, wall_r, wall_g, wall_b)
 
     m.mlx_put_image_to_window(p, win, img, 0, 0)
 
@@ -269,8 +307,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 10
-    height = 10
+    width = 20
+    height = 20
     entry = (0, 0)
     exit_coord = (width - 1, height - 1)
 
@@ -284,4 +322,4 @@ if __name__ == "__main__":
 
     # print("\n--- Visualized ASCII Maze ---")
     # print_ascii_maze(generated_maze, entry, exit_coord)
-    visualize_maze(generated_maze, 1000, 800)
+    visualize_maze(generated_maze)

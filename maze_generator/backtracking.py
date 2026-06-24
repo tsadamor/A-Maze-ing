@@ -1,10 +1,11 @@
 import random
 
 from mlx import Mlx
-from utils.patterns import get_pattern_42
 
-WIDTH = 800
-HEIGHT = 600
+from maze_generator.utils import get_pattern_42
+
+WIDTH = 1600
+HEIGHT = 1200
 
 NORTH = 1 << 0
 EAST = 1 << 1
@@ -12,7 +13,7 @@ SOUTH = 1 << 2
 WEST = 1 << 3
 
 
-def visualize_maze(maze, width=800, height=600):
+def visualize_maze(maze, width=1600, height=1200):
     rows = len(maze)
     cols = len(maze[0])
 
@@ -217,8 +218,8 @@ def print_ascii_maze(
 if __name__ == "__main__":
     import sys
 
-    width = 100
-    height = 100
+    width = 20
+    height = 20
     entry = (0, 0)
     # 出口を右下のマスに設定
     exit_coord = (width - 1, height - 1)
