@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mazegen"
+version = "1.0.0"
+description = "42 A-Maze-ing Project - Reusable Maze Generator"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+a_maze_ing = "a_maze_ing:main"
+
+[tool.hatch.build.targets.wheel]
+include = [
+  "a_maze_ing.py",
+  "maze_generator",
+  "maze_solver",
+  "parser",
+]
+exclude = [
+  "venv",
+  "__pycache__",
+  "*.txt",
+]
