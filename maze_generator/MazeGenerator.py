@@ -1,3 +1,4 @@
+import random
 from .backtracking import generate_maze_dfs
 from .wall_expand import gen_maze_wall_expand
 
@@ -10,8 +11,11 @@ class MazeGenerator:
         self.exit = config["EXIT"]
         self.output_file = config["OUTPUT_FILE"]
         self.perfect = config["PERFECT"]
+        self.seed = config["SEED"]
 
     def generate_maze(self) -> None:
+        random.seed(self.seed)
+
         if self.perfect:
             self.maze = generate_maze_dfs(self.width, self.height, self.entry)
         else:
