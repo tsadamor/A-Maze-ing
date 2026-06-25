@@ -68,4 +68,5 @@ class MazeSolver:
             solve_result = self.solve_maze(
                 self.maze, self.width, self.height, self.enter, self.exit_coord
             )
+            f.write("\n")
             f.write((solve_result))
