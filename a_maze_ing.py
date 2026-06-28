@@ -16,6 +16,15 @@ WEST = 1 << 3
 def visualize_maze(maze, config, width=1600, height=1200):
     m = Mlx()
     p = m.mlx_init()
+    cmodes = [
+        [255, 0, 0],
+        [0, 255, 0],
+        [0, 0, 255],
+        [255, 255, 0],
+        [255, 0, 255],
+        [0, 255, 255],
+        [255, 255, 255],
+    ]
 
     win = m.mlx_new_window(p, width, height, "Maze Viewer")
     img = m.mlx_new_image(p, width, height)
@@ -59,15 +68,6 @@ def visualize_maze(maze, config, width=1600, height=1200):
         sy = 1 if y0 < y1 else -1
 
         err = dx - dy
-        cmodes = [
-            [255, 0, 0],
-            [0, 255, 0],
-            [0, 0, 255],
-            [255, 255, 0],
-            [255, 0, 255],
-            [0, 255, 255],
-            [255, 255, 255],
-        ]
 
         while True:
             put_pixel(x0, y0, cmodes[cmode])
@@ -95,11 +95,33 @@ def visualize_maze(maze, config, width=1600, height=1200):
                 img_data[idx + 2] = 0
                 img_data[idx + 3] = 255
 
+    def fill_cell(x0, y0, x1, y1, cmode):
+        """
+        指定された矩形領域 (x0, y0) から (x1, y1) を指定した色で塗りつぶす
+        rgb_color: [r, g, b] の配列 (例: [255, 0, 0])
+        """
+        r, g, b = cmodes[cmode]
+
+        # ウィンドウの範囲外にはみ出さないようにガード（クリッピング）
+        start_x = max(0, min(x0, width))
+        end_x = max(0, min(x1, width))
+        start_y = max(0, min(y0, height))
+        end_y = max(0, min(y1, height))
+
+        # 縦横のループでピクセルを愚直に埋める（一番高速）
+        for y in range(start_y, end_y):
+            for x in range(start_x, end_x):
+                idx = y * line_size + x * (bpp // 8)
+
+                img_data[idx] = b
+                img_data[idx + 1] = g
+                img_data[idx + 2] = r
+                img_data[idx + 3] = 255
+
     def render_maze(cmode):
         nonlocal cell_size
         nonlocal offset_x
         nonlocal offset_y
-        nonlocal pattern_cells
 
         rows = len(maze)
         cols = len(maze[0])
@@ -112,9 +134,9 @@ def visualize_maze(maze, config, width=1600, height=1200):
         offset_x = (width - maze_w) // 2
         offset_y = (height - maze_h) // 2
 
-        pattern_cells = get_pattern_42(cols, rows)
-
         clear_image()
+
+        pattern_cells = get_pattern_42(cols, rows)
 
         for y in range(rows):
             for x in range(cols):
@@ -126,6 +148,12 @@ def visualize_maze(maze, config, width=1600, height=1200):
                 x1 = x0 + cell_size
                 y1 = y0 + cell_size
 
+                if (
+                    (y, x) == config["ENTRY"]
+                    or (y, x) == config["EXIT"]
+                    or (x, y) in pattern_cells
+                ):
+                    fill_cell(x0, y0, x1, y1, (cmode + 1) % 7)
                 if cell & NORTH:
                     draw_line(x0, y0, x1, y0, cmode)
 
@@ -139,6 +167,17 @@ def visualize_maze(maze, config, width=1600, height=1200):
                     draw_line(x0, y0, x0, y1, cmode)
 
         m.mlx_put_image_to_window(p, win, img, 0, 0)
+
+        text_y = height - 40
+
+        m.mlx_string_put(
+            p,
+            win,
+            50,
+            text_y,
+            0xFFFFFF,
+            "[C]: Recoloring [R]: Regenerate [Esc] Exit",
+        )
         m.mlx_do_sync(p)
 
     def cleanup():
@@ -149,13 +188,14 @@ def visualize_maze(maze, config, width=1600, height=1200):
     def on_key(keynum, param):
         nonlocal maze
         nonlocal cm
+        nonlocal show_pathgit
 
         print(f"{keynum} key pressed")
 
-        if keynum == 65307:  # ESC
+        if keynum == 65307:
             cleanup()
 
-        elif keynum == 114:  # r
+        elif keynum == 114:
             maze = MazeGenerator(config).generate_maze()
             render_maze(cm)
 
