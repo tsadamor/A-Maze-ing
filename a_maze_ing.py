@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from mlx import Mlx
 
 from maze_generator import MazeGenerator
@@ -7,13 +9,18 @@ from parser import parser
 
 CONF_FILE_NAME = "config.txt"
 
-NORTH = 1 << 0
-EAST = 1 << 1
-SOUTH = 1 << 2
-WEST = 1 << 3
+
+class Directions(IntEnum):
+    N = 0
+    E = 1
+    S = 2
+    W = 3
 
 
-def visualize_maze(maze, config, width=1600, height=1200):
+DIR_MAZE = [-1, 0, 1, 0, -1]
+
+
+def visualize_maze(maze, config, solver, width=1600, height=1200):
     m = Mlx()
     p = m.mlx_init()
     cmodes = [
@@ -35,6 +42,7 @@ def visualize_maze(maze, config, width=1600, height=1200):
     offset_x = 0
     offset_y = 0
     cm = 0
+    show_path = False
     pattern_cells = set()
 
     def put_pixel(cx, cy, cmode, thickness=7):
@@ -118,7 +126,7 @@ def visualize_maze(maze, config, width=1600, height=1200):
                 img_data[idx + 2] = r
                 img_data[idx + 3] = 255
 
-    def render_maze(cmode):
+    def render_maze(cmode, show_path):
         nonlocal cell_size
         nonlocal offset_x
         nonlocal offset_y
@@ -137,6 +145,21 @@ def visualize_maze(maze, config, width=1600, height=1200):
         clear_image()
 
         pattern_cells = get_pattern_42(cols, rows)
+        path_cells = []
+        if show_path:
+            path = solver.solve_maze(
+                maze,
+                cols,
+                rows,
+                config["ENTRY"],
+                config["EXIT"],
+            )
+            w, h = config["ENTRY"]
+            path_cells.append((w, h))
+            for d in path:
+                w += DIR_MAZE[Directions[d]]
+                h += DIR_MAZE[Directions[d] + 1]
+                path_cells.append((w, h))
 
         for y in range(rows):
             for x in range(cols):
@@ -154,16 +177,18 @@ def visualize_maze(maze, config, width=1600, height=1200):
                     or (x, y) in pattern_cells
                 ):
                     fill_cell(x0, y0, x1, y1, (cmode + 1) % 7)
-                if cell & NORTH:
+                elif (y, x) in path_cells:
+                    fill_cell(x0, y0, x1, y1, (cmode + 2) % 7)
+                if cell & 1 << Directions.N:
                     draw_line(x0, y0, x1, y0, cmode)
 
-                if cell & EAST:
+                if cell & 1 << Directions.E:
                     draw_line(x1, y0, x1, y1, cmode)
 
-                if cell & SOUTH:
+                if cell & 1 << Directions.S:
                     draw_line(x0, y1, x1, y1, cmode)
 
-                if cell & WEST:
+                if cell & 1 << Directions.W:
                     draw_line(x0, y0, x0, y1, cmode)
 
         m.mlx_put_image_to_window(p, win, img, 0, 0)
@@ -176,7 +201,7 @@ def visualize_maze(maze, config, width=1600, height=1200):
             50,
             text_y,
             0xFFFFFF,
-            "[C]: Recoloring [R]: Regenerate [Esc] Exit",
+            "[C]: Recoloring [R]: Regenerate [P] Path [Esc] Exit",
         )
         m.mlx_do_sync(p)
 
@@ -188,7 +213,7 @@ def visualize_maze(maze, config, width=1600, height=1200):
     def on_key(keynum, param):
         nonlocal maze
         nonlocal cm
-        nonlocal show_pathgit
+        nonlocal show_path
 
         print(f"{keynum} key pressed")
 
@@ -197,16 +222,20 @@ def visualize_maze(maze, config, width=1600, height=1200):
 
         elif keynum == 114:
             maze = MazeGenerator(config).generate_maze()
-            render_maze(cm)
+            render_maze(cm, show_path)
 
         elif keynum == 99:
             cm = (cm + 1) % 7
-            render_maze(cm)
+            render_maze(cm, show_path)
+
+        elif keynum == 112:
+            show_path = not show_path
+            render_maze(cm, show_path)
 
     def on_close(param):
         cleanup()
 
-    render_maze(cm)
+    render_maze(cm, show_path)
 
     m.mlx_key_hook(win, on_key, None)
     m.mlx_hook(win, 33, 0, on_close, None)
@@ -236,7 +265,7 @@ def main():
 
     solver.write_to_file()
 
-    visualize_maze(maze, config)
+    visualize_maze(maze, config, solver)
 
 
 if __name__ == "__main__":

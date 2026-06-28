@@ -72,6 +72,8 @@ def is_valid_dict(conf: dict[str, Any]) -> bool:
         return False
     if maze_height <= entry_height or maze_height <= exit_height:
         return False
+    if conf["ENTRY"] == conf["EXIT"]:
+        return False
 
     return True
 
