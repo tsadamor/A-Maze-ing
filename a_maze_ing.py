@@ -154,12 +154,12 @@ def visualize_maze(maze, config, solver, width=3000, height=2000):
                 config["ENTRY"],
                 config["EXIT"],
             )
-            w, h = config["ENTRY"]
-            path_cells.append((w, h))
+            cy, cx = config["ENTRY"]
+            path_cells.append((cy, cx))
             for d in path:
-                w += DIR_MAZE[Directions[d]]
-                h += DIR_MAZE[Directions[d] + 1]
-                path_cells.append((w, h))
+                cy += DIR_MAZE[Directions[d]]
+                cx += DIR_MAZE[Directions[d] + 1]
+                path_cells.append((cy, cx))
 
         for y in range(rows):
             for x in range(cols):
@@ -176,6 +176,7 @@ def visualize_maze(maze, config, solver, width=3000, height=2000):
                     or (y, x) == config["EXIT"]
                     or (x, y) in pattern_cells
                 ):
+                    print(y, x)
                     fill_cell(x0, y0, x1, y1, (cmode + 1) % 7)
                 elif (y, x) in path_cells:
                     fill_cell(x0, y0, x1, y1, (cmode + 2) % 7)
