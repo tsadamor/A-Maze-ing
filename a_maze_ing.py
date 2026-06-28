@@ -20,7 +20,7 @@ class Directions(IntEnum):
 DIR_MAZE = [-1, 0, 1, 0, -1]
 
 
-def visualize_maze(maze, config, solver, width=1600, height=1200):
+def visualize_maze(maze, config, solver, width=3000, height=2000):
     m = Mlx()
     p = m.mlx_init()
     cmodes = [
