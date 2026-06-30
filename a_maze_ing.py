@@ -1,6 +1,7 @@
 from enum import IntEnum
 
 from mlx import Mlx
+from pyautogui import size
 
 from maze_generator import MazeGenerator
 from maze_generator.utils import get_pattern_42
@@ -20,17 +21,19 @@ class Directions(IntEnum):
 DIR_MAZE = [-1, 0, 1, 0, -1]
 
 
-def visualize_maze(maze, config, solver, width=3000, height=2000):
+def visualize_maze(maze, config, solver, steps=None):
+    width, height = size()
+    height -= 100
     m = Mlx()
     p = m.mlx_init()
     cmodes = [
-        [255, 0, 0],
-        [0, 255, 0],
-        [0, 0, 255],
-        [255, 255, 0],
-        [255, 0, 255],
-        [0, 255, 255],
-        [255, 255, 255],
+        [100, 130, 160],  # スレートブルー（グレー混じりの落ち着いた青）
+        [120, 150, 170],  # ミスティブルー（霧がかったような、少し明るめの青）
+        [85, 110, 130],  # デニムブルー（深みと渋みのあるインディゴ系）
+        [110, 150, 160],  # クラウディシアン（やや緑がかった、くすんだトープブルー）
+        [130, 140, 170],  # ラベンダーブルー（ほんのり紫を帯びた上品な青）
+        [75, 95, 115],  # シャドウネイビー（暗すぎず、ニュアンスのある知的など紺）
+        [145, 165, 185],  # パウダーブルー（明るく、グレイッシュで優しい上品な青）
     ]
 
     win = m.mlx_new_window(p, width, height, "Maze Viewer")
@@ -43,13 +46,32 @@ def visualize_maze(maze, config, solver, width=3000, height=2000):
     offset_y = 0
     cm = 0
     show_path = False
-    pattern_cells = set()
 
-    def put_pixel(cx, cy, cmode, thickness=7):
+    # --- アニメーション状態 (迷路生成) ---
+    if steps:
+        anim_initial, anim_diffs = steps
+        anim_maze = [row[:] for row in anim_initial]  # 再生用作業コピー
+    else:
+        anim_initial = None
+        anim_diffs = []
+        anim_maze = None
+    anim_frame = [0]  # 現在のフレームインデックス
+    anim_active = [bool(steps)]
+    rows = len(maze)
+    cols = len(maze[0])
+    STEPS_PER_FRAME = max(1, rows * cols // 20)
+
+    # --- パスアニメーション状態 ---
+    path_cells_anim = []  # パスのセル座標リスト (y, x)
+    path_anim_idx = [0]  # 現在何セルまで塗ったか
+    path_anim_active = [False]  # パスアニメーション中フラグ
+    PATH_ANIM_TOTAL_FRAMES = 20  # パスアニメを何フレームで完了させるか (小さいほど速い)
+    path_cells_per_frame = [1]  # 動的に計算される
+
+    def put_pixel(cx, cy, cmode):
+        thickness = max(1, 100 // max(rows, cols))
         offset = thickness // 2
 
-        cell_x = int((cx - offset_x) // cell_size)
-        cell_y = int((cy - offset_y) // cell_size)
 
         r, g, b = cmode[0], cmode[1], cmode[2]
 
@@ -126,27 +148,28 @@ def visualize_maze(maze, config, solver, width=3000, height=2000):
                 img_data[idx + 2] = r
                 img_data[idx + 3] = 255
 
-    def render_maze(cmode, show_path):
+    def render_maze(cmode, show_path, partial_path=None):
+        """迷路を描画する。partial_path が渡されたらそのセルだけパス色で塗る。"""
         nonlocal cell_size
         nonlocal offset_x
         nonlocal offset_y
 
-        rows = len(maze)
-        cols = len(maze[0])
-
-        cell_size = min(width // (cols + 2), height // (rows + 2))
+        draw_h = height - 50  # テキスト表示用に下50px確保
+        cell_size = min(width // cols, draw_h // rows)
 
         maze_w = cols * cell_size
         maze_h = rows * cell_size
 
         offset_x = (width - maze_w) // 2
-        offset_y = (height - maze_h) // 2
+        offset_y = (draw_h - maze_h) // 2
 
         clear_image()
 
         pattern_cells = get_pattern_42(cols, rows)
         path_cells = []
-        if show_path:
+        if partial_path is not None:
+            path_cells = partial_path
+        elif show_path:
             path = solver.solve_maze(
                 maze,
                 cols,
@@ -215,28 +238,127 @@ def visualize_maze(maze, config, solver, width=3000, height=2000):
         nonlocal maze
         nonlocal cm
         nonlocal show_path
+        nonlocal anim_initial, anim_diffs, anim_maze
 
         print(f"{keynum} key pressed")
 
-        if keynum == 65307:
+        if keynum == 65307:  # Esc
             cleanup()
 
-        elif keynum == 114:
-            maze = MazeGenerator(config).generate_maze()
-            render_maze(cm, show_path)
+        elif keynum == 114:  # R: 再生成（アニメーション付き）
+            new_maze, new_steps = MazeGenerator(config).generate_maze_steps()
+            maze = new_maze
+            anim_initial, anim_diffs = new_steps
+            anim_maze = [row[:] for row in anim_initial]
+            anim_frame[0] = 0
+            anim_active[0] = True
 
-        elif keynum == 99:
-            cm = (cm + 1) % 7
-            render_maze(cm, show_path)
+        elif keynum == 99:  # C
+            if not anim_active[0]:
+                cm = (cm + 1) % 7
+                render_maze(cm, show_path)
 
-        elif keynum == 112:
-            show_path = not show_path
-            render_maze(cm, show_path)
+        elif keynum == 112:  # P
+            if not anim_active[0] and not path_anim_active[0]:
+                if show_path:
+                    # パス非表示に戻す
+                    show_path = False
+                    render_maze(cm, show_path)
+                else:
+                    # パスアニメーション開始
+                    path_str = solver.solve_maze(
+                        maze,
+                        cols,
+                        rows,
+                        config["ENTRY"],
+                        config["EXIT"],
+                    )
+                    path_cells_anim.clear()
+                    cy, cx = config["ENTRY"]
+                    path_cells_anim.append((cy, cx))
+                    for d in path_str:
+                        cy += DIR_MAZE[Directions[d]]
+                        cx += DIR_MAZE[Directions[d] + 1]
+                        path_cells_anim.append((cy, cx))
+                    path_anim_idx[0] = 0
+                    path_cells_per_frame[0] = max(
+                        1, len(path_cells_anim) // PATH_ANIM_TOTAL_FRAMES
+                    )
+                    path_anim_active[0] = True
+
+    def on_loop(param):
+        """mlx_loop_hook コールバック。迷路生成アニメ・パスアニメの両方を処理。"""
+        nonlocal show_path
+
+        # --- 迷路生成アニメーション ---
+        if anim_active[0]:
+            # STEPS_PER_FRAME 分の差分を anim_maze に適用
+            for _ in range(STEPS_PER_FRAME):
+                if anim_frame[0] >= len(anim_diffs):
+                    break
+                for dy, dx, val in anim_diffs[anim_frame[0]]:
+                    anim_maze[dy][dx] = val
+                anim_frame[0] += 1
+
+            if anim_frame[0] >= len(anim_diffs):
+                anim_active[0] = False
+                render_maze(cm, show_path)
+                return
+
+            # anim_maze を描画
+            draw_h = height - 50
+            cs = min(width // cols, draw_h // rows)
+            ox = (width - cols * cs) // 2
+            oy = (draw_h - rows * cs) // 2
+
+            clear_image()
+
+            for ry in range(rows):
+                for rx in range(cols):
+                    cell = anim_maze[ry][rx]
+                    x0 = ox + rx * cs
+                    y0 = oy + ry * cs
+                    x1 = x0 + cs
+                    y1 = y0 + cs
+
+                    if cell & 1 << Directions.N:
+                        draw_line(x0, y0, x1, y0, cm)
+                    if cell & 1 << Directions.E:
+                        draw_line(x1, y0, x1, y1, cm)
+                    if cell & 1 << Directions.S:
+                        draw_line(x0, y1, x1, y1, cm)
+                    if cell & 1 << Directions.W:
+                        draw_line(x0, y0, x0, y1, cm)
+
+            m.mlx_put_image_to_window(p, win, img, 0, 0)
+            m.mlx_do_sync(p)
+            return
+
+        # --- パスアニメーション ---
+        if path_anim_active[0]:
+            path_anim_idx[0] += path_cells_per_frame[0]
+
+            if path_anim_idx[0] >= len(path_cells_anim):
+                # 完了: show_path=True で通常描画に移行
+                path_anim_active[0] = False
+                show_path = True
+                render_maze(cm, show_path)
+                return
+
+            # 現在まで塗ったセルのスライスで再描画
+            partial = path_cells_anim[: path_anim_idx[0] + 1]
+            render_maze(cm, False, partial_path=partial)
+            return
 
     def on_close(param):
         cleanup()
 
-    render_maze(cm, show_path)
+    # アニメーションがあれば loop_hook を常に登録しておく
+    m.mlx_loop_hook(p, on_loop, None)
+
+    # アニメーションがない場合は通常の完成迷路を描画して開始
+    if not anim_active[0]:
+        render_maze(cm, show_path)
 
     m.mlx_key_hook(win, on_key, None)
     m.mlx_hook(win, 33, 0, on_close, None)
@@ -258,7 +380,7 @@ def main():
     hig = config["HEIGHT"]
 
     generator = MazeGenerator(config)
-    maze = generator.generate_maze()
+    maze, steps = generator.generate_maze_steps()
 
     generator.save_maze_to_file()
 
@@ -266,7 +388,7 @@ def main():
 
     solver.write_to_file()
 
-    visualize_maze(maze, config, solver)
+    visualize_maze(maze, config, solver, steps=steps)
 
 
 if __name__ == "__main__":
