@@ -1,5 +1,5 @@
 from parser import parser
-from maze_generator import MazeGenerator
+from maze_generator.MazeGenerator import MazeGenerator
 CONF_FILE_NAME = "config.txt"
 
 
