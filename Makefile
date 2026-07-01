@@ -12,6 +12,7 @@ MYPY            = $(VENV_BIN)/mypy
 MYPY_FLAGS      = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 SRCS            =  $(wildcard ./src/mazegen/*.py)
+export UV_LINK_MODE=copy
 
 
 all: install
@@ -32,7 +33,7 @@ $(VENV):
 
 run: install
 	uv run $(MAIN) config.txt
-
+	
 debug: install
 	$(V_PYTHON) -m pdb $(MAIN) config.txt
 
@@ -41,11 +42,11 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
 lint: install
-	$(FLAKE) . --exclude $(VENV)
-	$(MYPY) $(MYPY_FLAGS) src
+	@$(FLAKE8) . --exclude $(VENV)
+	@$(MYPY) $(MYPY_FLAGS) src
 
 lint-strict: install
-	$(FLAKE) . --exclude $(VENV)
+	$(FLAKE8) . --exclude $(VENV)
 	$(MYPY) $(MYPY_FLAGS) --strict src
 
 .PHONY: all install build run debug clean lint lint-strict
