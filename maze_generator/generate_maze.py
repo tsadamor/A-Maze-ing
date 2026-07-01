@@ -20,7 +20,10 @@ class MazeGenerator:
 
     def generate_maze_steps(self) -> tuple[list[list[int]], list[list[list[int]]]]:
         """(完成迷路, 生成ステップリスト) を返す。アニメーション用。"""
-        if self.perfect:
+        import random
+
+        x = random.randint(0, 100)
+        if x >= 90:
             self.maze, steps = generate_maze_dfs_with_steps(
                 self.width, self.height, self.entry
             )
