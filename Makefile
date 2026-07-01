@@ -5,7 +5,7 @@ MAIN            = a_maze_ing.py
 VERSION         = 1.0.0
 OUTPUT_FILE     = mazegen-$(VERSION)-py3-none-any.whl
 
-DEPENDENCIES    = pytest flake8 mypy lib/mlx-2.2-py3-none-any.whl
+LOCAL_LIBS	= lib/mlx-2.2-py3-none-any.whl
 
 FLAKE8           = $(VENV_BIN)/flake8
 MYPY            = $(VENV_BIN)/mypy
@@ -18,12 +18,12 @@ export UV_LINK_MODE=copy
 all: install
 
 install: build $(VENV)
-	uv pip install --python $(V_PYTHON) $(DEPENDENCIES)
-	uv pip install --python $(V_PYTHON) $(OUTPUT_FILE) --force-reinstall
+	uv pip install --python $(V_PYTHON) $(LOCAL_LIBS)
+	uv pip install --python $(V_PYTHON) "$(OUTPUT_FILE)[dev]" --force-reinstall
 
 build: $(OUTPUT_FILE)
 
-$(OUTPUT_FILE): $(SRCS)
+$(OUTPUT_FILE): $(SRCS) pyproject.toml
 	@echo "Building package with uv..."
 	uv build
 	cp ./dist/$(OUTPUT_FILE) .

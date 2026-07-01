@@ -24,3 +24,10 @@ exclude = [
   "__pycache__",
   "*.txt",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "flake8",
+    "mypy"
+]
