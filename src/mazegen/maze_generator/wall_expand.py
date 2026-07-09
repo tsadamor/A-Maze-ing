@@ -1,7 +1,7 @@
 import random
 from enum import IntEnum
 
-from maze_generator.utils import get_pattern_42
+from .utils import get_pattern_42
 
 WIDTH = 800
 HEIGHT = 600

@@ -1,3 +1,16 @@
+import glob
+from pathlib import Path
+import sys
+
+_root = Path(__file__).resolve().parent
+_mazegen_path = str(_root / "src" / "mazegen")
+if _mazegen_path not in sys.path:
+    sys.path.insert(0, _mazegen_path)
+
+for _site_packages in glob.glob(str(_root / ".venv" / "lib" / "python*" / "site-packages")):
+    if _site_packages not in sys.path:
+        sys.path.insert(0, _site_packages)
+
 from enum import IntEnum
 
 from mlx import Mlx

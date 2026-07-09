@@ -1,6 +1,6 @@
 import random
 
-from maze_generator.utils import get_pattern_42
+from .utils import get_pattern_42
 
 NORTH = 1 << 0
 EAST = 1 << 1
