@@ -1,8 +1,7 @@
 """Maze solver module using breadth-first search."""
 
-DIR_MAZE = [-1, 0, 1, 0, -1]
-DIR = ["N", "E", "S", "W"]
-DIR_WALL = [0, 1, 2, 3]
+from collections import deque
+from src.mazegen.maze_generator.utils import DIR_MAZE, DIR_NAMES
 
 
 class MazeSolver:
@@ -43,59 +42,38 @@ class MazeSolver:
         self.width = width
         self.height = height
 
-    def solve_maze(
-        self,
-        maze: list[list[int]],
-        width: int,
-        height: int,
-        enter: tuple[int, int],
-        exit_coord: tuple[int, int],
-    ) -> str:
+    def solve_maze(self) -> str:
         """Find shortest valid path from enter to exit_coord using BFS.
-
-        Args:
-            maze (list[list[int]]): 2D list of integer wall masks.
-            width (int): Maze width.
-            height (int): Maze height.
-            enter (tuple[int, int]): Entry coordinates (row, col).
-            exit_coord (tuple[int, int]): Exit coordinates (row, col).
 
         Returns:
             str: String of directions ('N', 'E', 'S', 'W') for shortest path.
         """
         def is_valid_coord(h: int, w: int) -> bool:
-            """Check if coordinate is within maze boundaries.
+            """Check if coordinate is within maze boundaries."""
+            return 0 <= h < self.height and 0 <= w < self.width
 
-            Args:
-                h (int): Row index.
-                w (int): Column index.
-
-            Returns:
-                bool: True if coordinate is inside the maze, False otherwise.
-            """
-            return 0 <= h < height and 0 <= w < width
-
-        queue: list[tuple[tuple[int, int], str]] = [(enter, "")]
-        visited = [[False] * width for _ in range(height)]
-        visited[enter[0]][enter[1]] = True
+        queue: deque[tuple[tuple[int, int], str]] = deque([(self.enter, "")])
+        visited = [[False] * self.width for _ in range(self.height)]
+        visited[self.enter[0]][self.enter[1]] = True
         result = ""
         found = False
 
         while queue:
-            coord, ans = queue.pop(0)
+            coord, ans = queue.popleft()
             h, w = coord[0], coord[1]
             for d in range(4):
                 nh, nw = h + DIR_MAZE[d], w + DIR_MAZE[d + 1]
                 if not is_valid_coord(nh, nw) or visited[nh][nw]:
                     continue
-                if maze[h][w] & (1 << DIR_WALL[d]):
+                # Bit positions: N=0, E=1, S=2, W=3
+                if self.maze[h][w] & (1 << d):
                     continue
                 visited[nh][nw] = True
-                if (nh, nw) == exit_coord:
-                    result = ans + DIR[d]
+                if (nh, nw) == self.exit_coord:
+                    result = ans + DIR_NAMES[d]
                     found = True
                     break
-                queue.append(((nh, nw), ans + DIR[d]))
+                queue.append(((nh, nw), ans + DIR_NAMES[d]))
             if found:
                 break
 
@@ -107,7 +85,5 @@ class MazeSolver:
             f.write("\n")
             f.write(f"{self.enter[1]},{self.enter[0]}\n")
             f.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
-            solve_result = self.solve_maze(
-                self.maze, self.width, self.height, self.enter, self.exit_coord
-            )
+            solve_result = self.solve_maze()
             f.write(f"{solve_result}\n")

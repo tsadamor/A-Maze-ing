@@ -1,39 +1,26 @@
 """Main entrypoint for A-Maze-ing project."""
 
-import glob
-from pathlib import Path
+import argparse
 import sys
+from pathlib import Path
 
+# Add project root to sys.path if not present to support direct execution
 _root = Path(__file__).resolve().parent
-_mazegen_path = str(_root / "src" / "mazegen")
-if _mazegen_path not in sys.path:
-    sys.path.insert(0, _mazegen_path)
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
-_site_pattern = str(_root / ".venv" / "lib" / "python*" / "site-packages")
-for _site_pkg in glob.glob(_site_pattern):
-    if _site_pkg not in sys.path:
-        sys.path.insert(0, _site_pkg)
-
-from enum import IntEnum  # noqa: E402
 from typing import Any  # noqa: E402
 
 from src.mazegen.maze_generator.MazeGenerator import (  # noqa: E402
     MazeGenerator,
 )
-from src.mazegen.maze_generator.utils import get_pattern_42  # noqa: E402
+from src.mazegen.maze_generator.utils import (  # noqa: E402
+    DIR_MAZE,
+    Directions,
+    get_pattern_42,
+)
 from src.mazegen.maze_solver import MazeSolver  # noqa: E402
 from src.mazegen.parser import parser  # noqa: E402
-
-
-class Directions(IntEnum):
-    """Cardinal directions bit positions."""
-    N = 0
-    E = 1
-    S = 2
-    W = 3
-
-
-DIR_MAZE = [-1, 0, 1, 0, -1]
 
 
 def visualize_maze(
@@ -111,6 +98,7 @@ def visualize_maze(
 
     cm = 0
     show_path = False
+    player_pos = list(config["ENTRY"])
 
     path_cells_anim: list[tuple[int, int]] = []
     path_anim_idx = [0]
@@ -201,7 +189,9 @@ def visualize_maze(
                 x1 = x0 + cell_size
                 y1 = y0 + cell_size
 
-                if (
+                if (y, x) == tuple(player_pos):
+                    fill_cell(x0, y0, x1, y1, (current_cmode + 3) % 7)
+                elif (
                     (y, x) == config["ENTRY"]
                     or (y, x) == config["EXIT"]
                     or (y, x) in pattern_cells
@@ -221,8 +211,17 @@ def visualize_maze(
 
         m.mlx_put_image_to_window(p, win, img, 0, 0)
         text_y = height - 40
-        msg = "[C]: Recoloring [R]: Regenerate [P] Path [Esc] Exit"
-        m.mlx_string_put(p, win, 50, text_y, 0xFFFFFF, msg)
+        if tuple(player_pos) == config["EXIT"]:
+            msg = (
+                "*** CONGRATULATIONS! You reached the Exit! *** [R] to Restart"
+            )
+            m.mlx_string_put(p, win, 50, text_y, 0x00FF00, msg)
+        else:
+            msg = (
+                "[C]: Color [R]: Regenerate [P]: Path "
+                "[Arrows/WASD]: Move [Esc]: Exit"
+            )
+            m.mlx_string_put(p, win, 50, text_y, 0xFFFFFF, msg)
         m.mlx_do_sync(p)
 
     def render_maze(
@@ -242,9 +241,7 @@ def visualize_maze(
         if partial_path is not None:
             path_cells = set(partial_path)
         elif show_path:
-            path = solver.solve_maze(
-                maze, cols, rows, config["ENTRY"], config["EXIT"]
-            )
+            path = solver.solve_maze()
             cy, cx = config["ENTRY"]
             path_cells.add((cy, cx))
             for d in path:
@@ -280,6 +277,7 @@ def visualize_maze(
                 anim_maze = [row[:] for row in anim_initial]
             anim_frame[0] = 0
             anim_active[0] = True
+            player_pos[0], player_pos[1] = config["ENTRY"]
         elif keynum == 99:
             if not anim_active[0]:
                 cm = (cm + 1) % 7
@@ -290,9 +288,7 @@ def visualize_maze(
                     show_path = False
                     render_maze(cm, show_path)
                 else:
-                    path_str = solver.solve_maze(
-                        maze, cols, rows, config["ENTRY"], config["EXIT"]
-                    )
+                    path_str = solver.solve_maze()
                     path_cells_anim.clear()
                     cy, cx = config["ENTRY"]
                     path_cells_anim.append((cy, cx))
@@ -305,6 +301,26 @@ def visualize_maze(
                         1, len(path_cells_anim) // path_anim_total
                     )
                     path_anim_active[0] = True
+
+        move_map = {
+            65362: (Directions.N, -1, 0),  # Up
+            119: (Directions.N, -1, 0),    # W
+            65364: (Directions.S, 1, 0),   # Down
+            115: (Directions.S, 1, 0),    # S
+            65361: (Directions.W, 0, -1),  # Left
+            97: (Directions.W, 0, -1),     # A
+            65363: (Directions.E, 0, 1),   # Right
+            100: (Directions.E, 0, 1),     # D
+        }
+        if keynum in move_map:
+            if not anim_active[0] and not path_anim_active[0]:
+                d_dir, dr, dc = move_map[keynum]
+                r, c = player_pos[0], player_pos[1]
+                if not (maze[r][c] & (1 << d_dir)):
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols:
+                        player_pos[0], player_pos[1] = nr, nc
+                        render_maze(cm, show_path)
 
     def on_loop(param: Any) -> None:
         """Frame updates hook callback for animations.
@@ -359,12 +375,20 @@ def visualize_maze(
 
 def main() -> None:
     """Main program entrypoint handling CLI config file argument."""
-    if len(sys.argv) != 2:
-        print("Usage: python3 a_maze_ing.py <config_file>")
-        return
+    cli_parser = argparse.ArgumentParser(
+        description="A-Maze-ing Maze Generator and Solver"
+    )
+    cli_parser.add_argument(
+        "config_file", help="Path to the maze configuration file"
+    )
+    cli_parser.add_argument(
+        "--no-gui",
+        action="store_true",
+        help="Disable MLX graphical rendering window",
+    )
+    args = cli_parser.parse_args()
 
-    config_file = sys.argv[1]
-    parse_result = parser(config_file)
+    parse_result = parser(args.config_file)
     if not parse_result[0]:
         return
 
@@ -381,7 +405,8 @@ def main() -> None:
     solver = MazeSolver(maze, config["OUTPUT_FILE"], ent, ext, wid, hig)
     solver.write_to_file()
 
-    visualize_maze(maze, config, solver, steps=steps)
+    if not args.no_gui:
+        visualize_maze(maze, config, solver, steps=steps)
 
 
 if __name__ == "__main__":

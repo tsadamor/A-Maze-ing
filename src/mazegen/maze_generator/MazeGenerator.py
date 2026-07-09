@@ -2,12 +2,46 @@
 
 import random
 import sys
-from typing import Any
+from typing import Any, Callable
 
 from src.mazegen.maze_solver import MazeSolver
 from .backtracking import generate_maze_dfs, generate_maze_dfs_with_steps
 from .braided import generate_maze_pacman, generate_maze_pacman_with_steps
 from .wall_expand import gen_maze_wall_expand, gen_maze_wall_expand_with_steps
+
+
+def _wall_expand_wrapper(
+    w: int, h: int, e: tuple[int, int]
+) -> list[list[int]]:
+    return gen_maze_wall_expand(w, h)
+
+
+def _wall_expand_steps_wrapper(
+    w: int, h: int, e: tuple[int, int]
+) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
+    return gen_maze_wall_expand_with_steps(w, h)
+
+
+# Mapping for extensible algorithm registration
+_ALGORITHMS: dict[
+    str, Callable[[int, int, tuple[int, int]], list[list[int]]]
+] = {
+    "dfs": generate_maze_dfs,
+    "wall_expand": _wall_expand_wrapper,
+    "pacman": generate_maze_pacman,
+}
+
+_ALGORITHMS_WITH_STEPS: dict[
+    str,
+    Callable[
+        [int, int, tuple[int, int]],
+        tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]],
+    ],
+] = {
+    "dfs": generate_maze_dfs_with_steps,
+    "wall_expand": _wall_expand_steps_wrapper,
+    "pacman": generate_maze_pacman_with_steps,
+}
 
 
 class MazeGenerator:
@@ -79,7 +113,7 @@ class MazeGenerator:
 
     def _check_pattern_42_size(self) -> None:
         """Warn if maze size is too small to render the '42' pattern."""
-        if self.width < 7 or self.height < 5:
+        if self.width < 9 or self.height < 7:
             print(
                 "Warning: Maze size too small to display '42' pattern.",
                 file=sys.stderr,
@@ -95,15 +129,13 @@ class MazeGenerator:
         if self.seed is not None:
             random.seed(self.seed)
 
-        algo = self.algorithm.lower() if self.algorithm else None
-        if algo == "dfs" or (algo is None and self.perfect):
-            self.maze = generate_maze_dfs(self.width, self.height, self.entry)
-        elif algo == "wall_expand":
-            self.maze = gen_maze_wall_expand(self.width, self.height)
-        else:
-            self.maze = generate_maze_pacman(
-                self.width, self.height, self.entry
-            )
+        algo = (
+            self.algorithm.lower()
+            if self.algorithm
+            else ("dfs" if self.perfect else "pacman")
+        )
+        generator = _ALGORITHMS.get(algo, generate_maze_pacman)
+        self.maze = generator(self.width, self.height, self.entry)
         return self.maze
 
     def generate_maze_steps(
@@ -121,19 +153,15 @@ class MazeGenerator:
         if self.seed is not None:
             random.seed(self.seed)
 
-        algo = self.algorithm.lower() if self.algorithm else None
-        if algo == "dfs" or (algo is None and self.perfect):
-            self.maze, steps = generate_maze_dfs_with_steps(
-                self.width, self.height, self.entry
-            )
-        elif algo == "wall_expand":
-            self.maze, steps = gen_maze_wall_expand_with_steps(
-                self.width, self.height
-            )
-        else:
-            self.maze, steps = generate_maze_pacman_with_steps(
-                self.width, self.height, self.entry
-            )
+        algo = (
+            self.algorithm.lower()
+            if self.algorithm
+            else ("dfs" if self.perfect else "pacman")
+        )
+        generator = _ALGORITHMS_WITH_STEPS.get(
+            algo, generate_maze_pacman_with_steps
+        )
+        self.maze, steps = generator(self.width, self.height, self.entry)
         return self.maze, steps
 
     def get_maze(self) -> list[list[int]]:
@@ -169,7 +197,7 @@ class MazeGenerator:
         solver = MazeSolver(
             self.maze, self.output_file, ent, ext, self.width, self.height
         )
-        return solver.solve_maze(self.maze, self.width, self.height, ent, ext)
+        return solver.solve_maze()
 
     def get_solution_path(
         self,

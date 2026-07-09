@@ -1,20 +1,107 @@
-"""Configuration parser module for A-Maze-ing project."""
+"""Configuration parser module using Pydantic for A-Maze-ing project."""
 
 import os
+import sys
 from typing import Any
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from src.mazegen.maze_generator.utils import get_pattern_42
 
-MANDATORY_KEYS = [
-    "WIDTH",
-    "HEIGHT",
-    "ENTRY",
-    "EXIT",
-    "OUTPUT_FILE",
-    "PERFECT",
-]
-
 ERROR_MSG = "Aborted: Bad Configuration File"
+
+
+class MazeConfig(BaseModel):
+    """Pydantic model for validating maze configuration parameters."""
+
+    WIDTH: int = Field(
+        ..., gt=1, description="Maze width (must be greater than 1)"
+    )
+    HEIGHT: int = Field(
+        ..., gt=1, description="Maze height (must be greater than 1)"
+    )
+    ENTRY: tuple[int, int]
+    EXIT: tuple[int, int]
+    OUTPUT_FILE: str
+    PERFECT: bool
+    SEED: int | None = None
+    ALGORITHM: str | None = None
+
+    @field_validator("ENTRY", "EXIT", mode="before")
+    @classmethod
+    def parse_coordinate(cls, v: Any) -> tuple[int, int]:
+        """Convert 'x,y' string into (row, col) i.e. (y, x) integer tuple."""
+        if isinstance(v, tuple) and len(v) == 2:
+            return v
+        if isinstance(v, str):
+            parts = v.split(",")
+            if len(parts) == 2:
+                try:
+                    return int(parts[1].strip()), int(parts[0].strip())
+                except ValueError:
+                    pass
+        raise ValueError(
+            "Coordinates must be in 'x,y' format "
+            "where x and y are integers."
+        )
+
+    @field_validator("PERFECT", mode="before")
+    @classmethod
+    def parse_perfect(cls, v: Any) -> bool:
+        """Parse boolean value from string representations."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            val_lower = v.lower()
+            if val_lower in ("true", "1", "yes"):
+                return True
+            elif val_lower in ("false", "0", "no"):
+                return False
+        raise ValueError(
+            "PERFECT must be a boolean value (true/false, 1/0, yes/no)."
+        )
+
+    @model_validator(mode="after")
+    def validate_maze_constraints(self) -> "MazeConfig":
+        """Perform semantic validation on the maze configuration."""
+        width = self.WIDTH
+        height = self.HEIGHT
+        entry_row, entry_col = self.ENTRY
+        exit_row, exit_col = self.EXIT
+
+        # Bound checks
+        if not (0 <= entry_col < width and 0 <= entry_row < height):
+            raise ValueError(
+                f"ENTRY coordinate {self.ENTRY} (row, col) is out of bounds "
+                f"for maze of size {width}x{height}."
+            )
+        if not (0 <= exit_col < width and 0 <= exit_row < height):
+            raise ValueError(
+                f"EXIT coordinate {self.EXIT} (row, col) is out of bounds "
+                f"for maze of size {width}x{height}."
+            )
+
+        # Duplicate check
+        if self.ENTRY == self.EXIT:
+            raise ValueError("ENTRY and EXIT coordinates cannot be the same.")
+
+        # Pattern 42 collision check
+        pattern_42 = get_pattern_42(width, height)
+        if self.ENTRY in pattern_42:
+            raise ValueError(
+                "ENTRY coordinate cannot be inside the '42' pattern."
+            )
+        if self.EXIT in pattern_42:
+            raise ValueError(
+                "EXIT coordinate cannot be inside the '42' pattern."
+            )
+
+        return self
 
 
 def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
@@ -42,99 +129,11 @@ def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
                 if equal_count != 1:
                     return (False, {})
                 key, value = line.split("=")
-                key = key.strip()
-                value = value.strip()
-                conf_result[key] = value
+                conf_result[key.strip()] = value.strip()
     except OSError:
         return (False, {})
 
-    for key in MANDATORY_KEYS:
-        if key not in conf_result:
-            return (False, {})
     return (True, conf_result)
-
-
-def convert_config_data(
-    conf: dict[str, str],
-) -> tuple[bool, dict[str, Any]]:
-    """Convert raw config values into appropriate Python data types.
-
-    Args:
-        conf (dict[str, str]): Raw string dictionary of
-            configuration parameters.
-
-    Returns:
-        tuple[bool, dict[str, Any]]: A tuple containing:
-            - bool: Success indicator.
-            - dict[str, Any]: Converted configuration dictionary.
-    """
-    converted_res: dict[str, Any] = {}
-    for key, value in conf.items():
-        if key in ("WIDTH", "HEIGHT"):
-            try:
-                converted_res[key] = int(value)
-            except ValueError:
-                return (False, {})
-        elif key in ("ENTRY", "EXIT"):
-            try:
-                coords = value.split(",")
-                if len(coords) != 2:
-                    return (False, {})
-                x, y = int(coords[0].strip()), int(coords[1].strip())
-                # Store coordinates as (row, col) i.e. (y, x)
-                converted_res[key] = (y, x)
-            except ValueError:
-                return (False, {})
-        elif key == "PERFECT":
-            val_lower = value.lower()
-            if val_lower in ("true", "1", "yes"):
-                converted_res[key] = True
-            elif val_lower in ("false", "0", "no"):
-                converted_res[key] = False
-            else:
-                return (False, {})
-        elif key == "SEED":
-            try:
-                converted_res[key] = int(value)
-            except ValueError:
-                return (False, {})
-        else:
-            converted_res[key] = value
-
-    if "SEED" not in converted_res:
-        converted_res["SEED"] = None
-
-    return (True, converted_res)
-
-
-def is_valid_dict(conf: dict[str, Any]) -> bool:
-    """Validate semantic constraints on configuration dictionary.
-
-    Args:
-        conf (dict[str, Any]): Converted configuration dictionary.
-
-    Returns:
-        bool: True if valid, False otherwise.
-    """
-    maze_width: int = conf["WIDTH"]
-    maze_height: int = conf["HEIGHT"]
-    entry_row, entry_col = conf["ENTRY"]
-    exit_row, exit_col = conf["EXIT"]
-
-    if maze_width <= 1 or maze_height <= 1:
-        return False
-    if not (0 <= entry_col < maze_width and 0 <= entry_row < maze_height):
-        return False
-    if not (0 <= exit_col < maze_width and 0 <= exit_row < maze_height):
-        return False
-    if conf["ENTRY"] == conf["EXIT"]:
-        return False
-
-    pattern_42 = get_pattern_42(maze_width, maze_height)
-    if conf["ENTRY"] in pattern_42 or conf["EXIT"] in pattern_42:
-        return False
-
-    return True
 
 
 def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
@@ -148,18 +147,19 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
             - bool: Success indicator.
             - dict[str, Any]: Validated configuration dictionary.
     """
-    initial_parse_result = parse_file(file_name)
-    if not initial_parse_result[0]:
+    success, raw_config = parse_file(file_name)
+    if not success:
         print(ERROR_MSG)
         return (False, {})
 
-    converted_parse_result = convert_config_data(initial_parse_result[1])
-    if not converted_parse_result[0]:
+    try:
+        config = MazeConfig.model_validate(raw_config)
+        return (True, config.model_dump())
+    except ValidationError as e:
         print(ERROR_MSG)
+        # Detailed errors to stderr
+        for error in e.errors():
+            loc = ".".join(str(x) for x in error["loc"])
+            msg = error["msg"]
+            print(f"  - Validation Error on '{loc}': {msg}", file=sys.stderr)
         return (False, {})
-
-    if not is_valid_dict(converted_parse_result[1]):
-        print(ERROR_MSG)
-        return (False, {})
-
-    return (True, converted_parse_result[1])

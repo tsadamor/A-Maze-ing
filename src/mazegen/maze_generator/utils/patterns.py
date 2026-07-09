@@ -30,7 +30,7 @@ def get_pattern_42(width: int, height: int) -> set[tuple[int, int]]:
     pattern_width = 7
     pattern_height = 5
 
-    if width < pattern_width or height < pattern_height:
+    if width < 9 or height < 7:
         return set()
 
     start_col = (width - pattern_width + (1 if width % 2 == 0 else 0)) // 2

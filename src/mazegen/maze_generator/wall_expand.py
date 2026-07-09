@@ -1,18 +1,9 @@
 """Maze generation using wall expansion algorithm."""
 
 import random
-from enum import IntEnum
 from typing import Any
 
-from .utils import get_pattern_42
-
-
-class Direction(IntEnum):
-    """Bitmask values for cardinal directions."""
-    NORTH = 1 << 0
-    EAST = 1 << 1
-    SOUTH = 1 << 2
-    WEST = 1 << 3
+from .utils import get_pattern_42, DirectionMask as Direction
 
 
 def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
