@@ -1,5 +1,9 @@
+"""Configuration parser module for A-Maze-ing project."""
+
 import os
 from typing import Any
+
+from src.mazegen.maze_generator.utils import get_pattern_42
 
 MANDATORY_KEYS = [
     "WIDTH",
@@ -14,43 +18,81 @@ ERROR_MSG = "Aborted: Bad Configuration File"
 
 
 def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
+    """Parse key=value configuration file into a dictionary of strings.
 
+    Args:
+        file_name (str): Path to configuration text file.
+
+    Returns:
+        tuple[bool, dict[str, str]]: A tuple containing:
+            - bool: Success indicator.
+            - dict[str, str]: Raw string configuration dictionary.
+    """
     if not os.path.isfile(file_name):
         return (False, {})
-    conf_result = {}
-    with open(file_name, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("#"):
-                continue
-            equal_count = line.count("=")
-            if equal_count != 1:
-                return (False, {})
-            key, value = line.split("=")
-            conf_result[key] = value
+
+    conf_result: dict[str, str] = {}
+    try:
+        with open(file_name, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                equal_count = line.count("=")
+                if equal_count != 1:
+                    return (False, {})
+                key, value = line.split("=")
+                key = key.strip()
+                value = value.strip()
+                conf_result[key] = value
+    except OSError:
+        return (False, {})
+
     for key in MANDATORY_KEYS:
         if key not in conf_result:
             return (False, {})
     return (True, conf_result)
 
 
-def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
+def convert_config_data(
+    conf: dict[str, str],
+) -> tuple[bool, dict[str, Any]]:
+    """Convert raw config values into appropriate Python data types.
+
+    Args:
+        conf (dict[str, str]): Raw string dictionary of
+            configuration parameters.
+
+    Returns:
+        tuple[bool, dict[str, Any]]: A tuple containing:
+            - bool: Success indicator.
+            - dict[str, Any]: Converted configuration dictionary.
+    """
     converted_res: dict[str, Any] = {}
     for key, value in conf.items():
-        if key == "WIDTH" or key == "HEIGHT":
+        if key in ("WIDTH", "HEIGHT"):
             try:
                 converted_res[key] = int(value)
             except ValueError:
                 return (False, {})
-        elif key == "ENTRY" or key == "EXIT":
+        elif key in ("ENTRY", "EXIT"):
             try:
-                x, y = value.split(",")
-                converted_res[key] = (int(y), int(x))
+                coords = value.split(",")
+                if len(coords) != 2:
+                    return (False, {})
+                x, y = int(coords[0].strip()), int(coords[1].strip())
+                # Store coordinates as (row, col) i.e. (y, x)
+                converted_res[key] = (y, x)
             except ValueError:
                 return (False, {})
         elif key == "PERFECT":
-            is_perfect = value.lower() in ["true", "1", "yes"]
-            converted_res[key] = is_perfect
+            val_lower = value.lower()
+            if val_lower in ("true", "1", "yes"):
+                converted_res[key] = True
+            elif val_lower in ("false", "0", "no"):
+                converted_res[key] = False
+            else:
+                return (False, {})
         elif key == "SEED":
             try:
                 converted_res[key] = int(value)
@@ -66,28 +108,46 @@ def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
 
 
 def is_valid_dict(conf: dict[str, Any]) -> bool:
-    maze_width = conf["WIDTH"]
-    maze_height = conf["HEIGHT"]
-    entry_height, entry_width = conf["ENTRY"][0], conf["ENTRY"][1]
-    exit_height, exit_width = conf["EXIT"][0], conf["EXIT"][1]
+    """Validate semantic constraints on configuration dictionary.
+
+    Args:
+        conf (dict[str, Any]): Converted configuration dictionary.
+
+    Returns:
+        bool: True if valid, False otherwise.
+    """
+    maze_width: int = conf["WIDTH"]
+    maze_height: int = conf["HEIGHT"]
+    entry_row, entry_col = conf["ENTRY"]
+    exit_row, exit_col = conf["EXIT"]
 
     if maze_width <= 1 or maze_height <= 1:
         return False
-    if entry_width < 0 or entry_height < 0:
+    if not (0 <= entry_col < maze_width and 0 <= entry_row < maze_height):
         return False
-    if exit_width < 0 or exit_height < 0:
-        return False
-    if maze_width <= entry_width or maze_width <= exit_width:
-        return False
-    if maze_height <= entry_height or maze_height <= exit_height:
+    if not (0 <= exit_col < maze_width and 0 <= exit_row < maze_height):
         return False
     if conf["ENTRY"] == conf["EXIT"]:
+        return False
+
+    pattern_42 = get_pattern_42(maze_width, maze_height)
+    if conf["ENTRY"] in pattern_42 or conf["EXIT"] in pattern_42:
         return False
 
     return True
 
 
 def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
+    """Main entrypoint for parsing and validating maze configuration file.
+
+    Args:
+        file_name (str): Path to configuration file.
+
+    Returns:
+        tuple[bool, dict[str, Any]]: A tuple containing:
+            - bool: Success indicator.
+            - dict[str, Any]: Validated configuration dictionary.
+    """
     initial_parse_result = parse_file(file_name)
     if not initial_parse_result[0]:
         print(ERROR_MSG)

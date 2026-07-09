@@ -29,3 +29,12 @@ dev = [
     "flake8",
     "mypy"
 ]
+
+[tool.mypy]
+exclude = [
+    '^venv/',
+    '^\.venv/',
+]
+mypy_path = "."
+explicit_package_bases = true
+ignore_missing_imports = true
