@@ -15,12 +15,17 @@ a_maze_ing = "a_maze_ing:main"
 [tool.hatch.build.targets.wheel]
 include = [
   "a_maze_ing.py",
-  "maze_generator",
-  "maze_solver",
-  "parser",
+  "src/mazegen",
 ]
 exclude = [
   "venv",
   "__pycache__",
   "*.txt",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "flake8",
+    "mypy"
 ]

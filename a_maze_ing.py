@@ -3,11 +3,10 @@ from enum import IntEnum
 from mlx import Mlx
 from pyautogui import size
 
-from maze_generator.MazeGenerator import MazeGenerator
-from maze_generator.utils import get_pattern_42
-from maze_solver import MazeSolver
-from parser import parser
-
+from src.mazegen.maze_generator.MazeGenerator import MazeGenerator
+from src.mazegen.maze_generator.utils import get_pattern_42
+from src.mazegen.maze_solver import MazeSolver
+from src.mazegen.parser import parser
 CONF_FILE_NAME = "config.txt"
 
 
