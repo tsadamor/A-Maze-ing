@@ -78,12 +78,3 @@ class MazeSolver:
                 break
 
         return result
-
-    def write_to_file(self) -> None:
-        """Append entry/exit coordinates and shortest path to output file."""
-        with open(self.file_name, "a", encoding="utf-8") as f:
-            f.write("\n")
-            f.write(f"{self.enter[1]},{self.enter[0]}\n")
-            f.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
-            solve_result = self.solve_maze()
-            f.write(f"{solve_result}\n")

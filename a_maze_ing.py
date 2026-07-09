@@ -403,7 +403,6 @@ def main() -> None:
     generator.save_maze_to_file()
 
     solver = MazeSolver(maze, config["OUTPUT_FILE"], ent, ext, wid, hig)
-    solver.write_to_file()
 
     if not args.no_gui:
         visualize_maze(maze, config, solver, steps=steps)

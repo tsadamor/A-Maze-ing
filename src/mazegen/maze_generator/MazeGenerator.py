@@ -226,7 +226,7 @@ class MazeGenerator:
         return coords
 
     def save_maze_to_file(self) -> None:
-        """Save hexadecimal representation of maze rows to output file."""
+        """Save maze hex grid, entry/exit, and solved path to file."""
         if not self.maze:
             return
 
@@ -236,3 +236,9 @@ class MazeGenerator:
                 for w in range(self.width):
                     print(hex_char[self.maze[h][w]], end="", file=f)
                 print(file=f)
+
+            f.write("\n")
+            f.write(f"{self.entry[1]},{self.entry[0]}\n")
+            f.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
+            solve_result = self.solve_maze()
+            f.write(f"{solve_result}\n")
