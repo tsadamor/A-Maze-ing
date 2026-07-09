@@ -45,7 +45,7 @@ def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
         elif key == "ENTRY" or key == "EXIT":
             try:
                 x, y = value.split(",")
-                converted_res[key] = (int(x), int(y))
+                converted_res[key] = (int(y), int(x))
             except ValueError:
                 return (False, {})
         elif key == "PERFECT":
@@ -68,8 +68,8 @@ def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
 def is_valid_dict(conf: dict[str, Any]) -> bool:
     maze_width = conf["WIDTH"]
     maze_height = conf["HEIGHT"]
-    entry_width, entry_height = conf["ENTRY"][0], conf["ENTRY"][1]
-    exit_width, exit_height = conf["EXIT"][0], conf["EXIT"][1]
+    entry_height, entry_width = conf["ENTRY"][0], conf["ENTRY"][1]
+    exit_height, exit_width = conf["EXIT"][0], conf["EXIT"][1]
 
     if maze_width <= 1 or maze_height <= 1:
         return False
@@ -80,6 +80,8 @@ def is_valid_dict(conf: dict[str, Any]) -> bool:
     if maze_width <= entry_width or maze_width <= exit_width:
         return False
     if maze_height <= entry_height or maze_height <= exit_height:
+        return False
+    if conf["ENTRY"] == conf["EXIT"]:
         return False
 
     return True
