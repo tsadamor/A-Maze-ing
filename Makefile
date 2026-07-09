@@ -5,9 +5,8 @@ CONFIG := config.txt
 .PHONY: install run debug clean lint lint-strict build
 
 install:
-	$(UV) venv
-	$(UV) pip install -e .
-	$(UV) pip install flake8 mypy hatchling
+	$(UV) venv --allow-existing
+	$(UV) sync --dev
 
 run:
 	$(PYTHON) a_maze_ing.py $(CONFIG)

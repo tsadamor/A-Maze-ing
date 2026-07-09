@@ -1,4 +1,8 @@
 import random
+from collections import deque
+
+Coord = tuple[int, int]
+QueueItem = tuple[Coord, str]
 
 DIR_MAZE = [-1, 0, 1, 0, -1]
 DIR = ["N", "E", "S", "W"]
@@ -10,11 +14,11 @@ class MazeSolver:
         self,
         maze: list[list[int]],
         file_name: str,
-        enter: tuple[int, int],
-        exit_coord: tuple[int, int],
+        enter: Coord,
+        exit_coord: Coord,
         width: int,
         height: int,
-    ):
+    ) -> None:
         self.maze = maze
         self.file_name = file_name
         self.enter = enter
@@ -27,22 +31,22 @@ class MazeSolver:
         maze: list[list[int]],
         width: int,
         height: int,
-        enter: tuple[int, int],
-        exit_coord: tuple[int, int],
+        enter: Coord,
+        exit_coord: Coord,
     ) -> str:
-        def is_valid_coord(h, w) -> bool:
+        def is_valid_coord(h: int, w: int) -> bool:
             if 0 <= h < height and 0 <= w < width:
                 return True
             return False
 
-        queue: list[tuple[int, int], str] = []
+        queue: deque[QueueItem] = deque()
         queue.append((enter, ""))
         visited = [[False] * width for _ in range(height)]
         visited[enter[0]][enter[1]] = True
         result = ""
         found = False
         while len(queue):
-            coord, ans = queue.pop(0)
+            coord, ans = queue.popleft()
             h, w = coord[0], coord[1]
             for d in range(4):
                 nh, nw = h + DIR_MAZE[d], w + DIR_MAZE[d + 1]
@@ -65,16 +69,16 @@ class MazeSolver:
         maze: list[list[int]],
         width: int,
         height: int,
-        enter: tuple[int, int],
-        exit_coord: tuple[int, int],
+        enter: Coord,
+        exit_coord: Coord,
     ) -> str:
-        def is_valid_coord(h, w) -> bool:
+        def is_valid_coord(h: int, w: int) -> bool:
             if 0 <= h < height and 0 <= w < width:
                 return True
             return False
 
-        stack = [(enter, "")]
-        visited = {enter}
+        stack: list[QueueItem] = [(enter, "")]
+        visited: set[Coord] = {enter}
 
         while stack:
             coord, ans = stack.pop()
@@ -95,7 +99,7 @@ class MazeSolver:
                 stack.append(((nh, nw), ans + DIR[d]))
         return ""
 
-    def write_to_file(self):
+    def write_to_file(self) -> None:
         with open(self.file_name, "a", encoding="utf-8") as f:
             f.write("\n")
             f.write(f"{self.enter[0]},{self.enter[1]}")

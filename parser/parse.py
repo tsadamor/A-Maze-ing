@@ -1,105 +1,97 @@
 import os
 from typing import Any
 
-MANDATORY_KEYS = [
-    "WIDTH",
-    "HEIGHT",
-    "ENTRY",
-    "EXIT",
-    "OUTPUT_FILE",
-    "PERFECT",
-]
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import field_validator, model_validator
+
+Coord = tuple[int, int]
 
 ERROR_MSG = "Aborted: Bad Configuration File"
 
 
-def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
+class MazeConfig(BaseModel):
+    """Typed and validated representation of a maze configuration file."""
 
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    width: int = Field(alias="WIDTH")
+    height: int = Field(alias="HEIGHT")
+    entry: Coord = Field(alias="ENTRY")
+    exit_coord: Coord = Field(alias="EXIT")
+    output_file: str = Field(alias="OUTPUT_FILE")
+    perfect: bool = Field(alias="PERFECT")
+    seed: int | None = Field(default=None, alias="SEED")
+
+    @field_validator("entry", "exit_coord", mode="before")
+    @classmethod
+    def parse_coord(cls, value: object) -> Coord:
+        """Convert 'x,y' into internal (row, column)."""
+        if isinstance(value, str):
+            parts = value.split(",")
+            if len(parts) != 2:
+                raise ValueError("coordinate must be x,y")
+            x_str, y_str = parts
+            return (int(y_str), int(x_str))
+        if (
+            isinstance(value, tuple)
+            and len(value) == 2
+            and all(isinstance(item, int) for item in value)
+        ):
+            return value
+        raise ValueError("coordinate must be x,y")
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "MazeConfig":
+        """Validate dimensions and coordinate bounds."""
+        if self.width <= 1 or self.height <= 1:
+            raise ValueError("width and height must be greater than 1")
+        if self.entry == self.exit_coord:
+            raise ValueError("entry and exit must be different")
+        self._validate_coord(self.entry)
+        self._validate_coord(self.exit_coord)
+        return self
+
+    def _validate_coord(self, coord: Coord) -> None:
+        row, column = coord
+        if column < 0 or row < 0:
+            raise ValueError("coordinates must be non-negative")
+        if self.width <= column or self.height <= row:
+            raise ValueError("coordinates must be inside maze bounds")
+
+    def to_runtime_dict(self) -> dict[str, Any]:
+        """Return the uppercase-key runtime dictionary."""
+        return self.model_dump(by_alias=True)
+
+
+def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
+    """Parse KEY=VALUE lines from the configuration file."""
     if not os.path.isfile(file_name):
         return (False, {})
-    conf_result = {}
+
+    conf_result: dict[str, str] = {}
     with open(file_name, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line.startswith("#"):
+            if not line or line.startswith("#"):
                 continue
-            equal_count = line.count("=")
-            if equal_count != 1:
+            if line.count("=") != 1:
                 return (False, {})
             key, value = line.split("=")
             conf_result[key] = value
-    for key in MANDATORY_KEYS:
-        if key not in conf_result:
-            return (False, {})
     return (True, conf_result)
 
 
-def convert_config_data(conf: dict[str, str]) -> tuple[bool, dict[str, Any]]:
-    converted_res: dict[str, Any] = {}
-    for key, value in conf.items():
-        if key == "WIDTH" or key == "HEIGHT":
-            try:
-                converted_res[key] = int(value)
-            except ValueError:
-                return (False, {})
-        elif key == "ENTRY" or key == "EXIT":
-            try:
-                x, y = value.split(",")
-                converted_res[key] = (int(y), int(x))
-            except ValueError:
-                return (False, {})
-        elif key == "PERFECT":
-            is_perfect = value.lower() in ["true", "1", "yes"]
-            converted_res[key] = is_perfect
-        elif key == "SEED":
-            try:
-                converted_res[key] = int(value)
-            except ValueError:
-                return (False, {})
-        else:
-            converted_res[key] = value
-
-    if "SEED" not in converted_res:
-        converted_res["SEED"] = None
-
-    return (True, converted_res)
-
-
-def is_valid_dict(conf: dict[str, Any]) -> bool:
-    maze_width = conf["WIDTH"]
-    maze_height = conf["HEIGHT"]
-    entry_height, entry_width = conf["ENTRY"][0], conf["ENTRY"][1]
-    exit_height, exit_width = conf["EXIT"][0], conf["EXIT"][1]
-
-    if maze_width <= 1 or maze_height <= 1:
-        return False
-    if entry_width < 0 or entry_height < 0:
-        return False
-    if exit_width < 0 or exit_height < 0:
-        return False
-    if maze_width <= entry_width or maze_width <= exit_width:
-        return False
-    if maze_height <= entry_height or maze_height <= exit_height:
-        return False
-    if conf["ENTRY"] == conf["EXIT"]:
-        return False
-
-    return True
-
-
 def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
-    initial_parse_result = parse_file(file_name)
-    if not initial_parse_result[0]:
+    """Load and validate a maze configuration file."""
+    parse_result = parse_file(file_name)
+    if not parse_result[0]:
         print(ERROR_MSG)
         return (False, {})
 
-    converted_parse_result = convert_config_data(initial_parse_result[1])
-    if not converted_parse_result[0]:
+    try:
+        config = MazeConfig.model_validate(parse_result[1])
+    except (ValidationError, ValueError):
         print(ERROR_MSG)
         return (False, {})
 
-    if not is_valid_dict(converted_parse_result[1]):
-        print(ERROR_MSG)
-        return (False, {})
-
-    return (True, converted_parse_result[1])
+    return (True, config.to_runtime_dict())

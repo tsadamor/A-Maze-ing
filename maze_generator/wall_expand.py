@@ -10,6 +10,9 @@ NORTH = 1 << 0
 EAST = 1 << 1
 SOUTH = 1 << 2
 WEST = 1 << 3
+Maze = list[list[int]]
+StepDiff = list[tuple[int, int, int]]
+AnimationSteps = tuple[Maze, list[StepDiff]]
 
 
 class Direction(IntEnum):
@@ -43,14 +46,20 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
     for w in range(width):
         maze[0][w] |= Direction.NORTH
         maze[height - 1][w] |= Direction.SOUTH
-        connected_pillars.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
+        connected_pillars.update(
+            [(0, w), (0, w + 1), (height, w), (height, w + 1)]
+        )
 
     for h in range(height):
         maze[h][0] |= Direction.WEST
         maze[h][width - 1] |= Direction.EAST
-        connected_pillars.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
+        connected_pillars.update(
+            [(h, 0), (h + 1, 0), (h, width), (h + 1, width)]
+        )
 
-    remaining_pillars = [(h, w) for h in range(1, height) for w in range(1, width)]
+    remaining_pillars = [
+        (h, w) for h in range(1, height) for w in range(1, width)
+    ]
     random.shuffle(remaining_pillars)
 
     while remaining_pillars:
@@ -113,7 +122,10 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
     return maze
 
 
-def gen_maze_wall_expand_with_steps(width: int, height: int):
+def gen_maze_wall_expand_with_steps(
+    width: int,
+    height: int,
+) -> tuple[Maze, AnimationSteps]:
     """壁伸長法で迷路を生成し、(完成迷路, (初期状態, 差分リスト)) を返す。
 
     差分リストの各要素は [(y, x, new_value), ...] で、
@@ -142,17 +154,23 @@ def gen_maze_wall_expand_with_steps(width: int, height: int):
     for w in range(width):
         maze[0][w] |= Direction.NORTH
         maze[height - 1][w] |= Direction.SOUTH
-        connected_pillars.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
+        connected_pillars.update(
+            [(0, w), (0, w + 1), (height, w), (height, w + 1)]
+        )
 
     for h in range(height):
         maze[h][0] |= Direction.WEST
         maze[h][width - 1] |= Direction.EAST
-        connected_pillars.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
+        connected_pillars.update(
+            [(h, 0), (h + 1, 0), (h, width), (h + 1, width)]
+        )
 
     initial = [row[:] for row in maze]
     diffs = []
 
-    remaining_pillars = [(h, w) for h in range(1, height) for w in range(1, width)]
+    remaining_pillars = [
+        (h, w) for h in range(1, height) for w in range(1, width)
+    ]
     random.shuffle(remaining_pillars)
 
     while remaining_pillars:
@@ -188,19 +206,35 @@ def gen_maze_wall_expand_with_steps(width: int, height: int):
                             min_h = min(from_h, to_h)
                             if from_w > 0:
                                 maze[min_h][from_w - 1] |= Direction.EAST
-                                diff.append((min_h, from_w - 1, maze[min_h][from_w - 1]))
+                                diff.append(
+                                    (
+                                        min_h,
+                                        from_w - 1,
+                                        maze[min_h][from_w - 1],
+                                    )
+                                )
                             if from_w < width:
                                 maze[min_h][from_w] |= Direction.WEST
-                                diff.append((min_h, from_w, maze[min_h][from_w]))
+                                diff.append(
+                                    (min_h, from_w, maze[min_h][from_w])
+                                )
 
                         else:
                             min_w = min(from_w, to_w)
                             if from_h > 0:
                                 maze[from_h - 1][min_w] |= Direction.SOUTH
-                                diff.append((from_h - 1, min_w, maze[from_h - 1][min_w]))
+                                diff.append(
+                                    (
+                                        from_h - 1,
+                                        min_w,
+                                        maze[from_h - 1][min_w],
+                                    )
+                                )
                             if from_h < height:
                                 maze[from_h][min_w] |= Direction.NORTH
-                                diff.append((from_h, min_w, maze[from_h][min_w]))
+                                diff.append(
+                                    (from_h, min_w, maze[from_h][min_w])
+                                )
 
                     for p in path_history:
                         connected_pillars.add(p)
