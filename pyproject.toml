@@ -24,3 +24,8 @@ exclude = [
   "__pycache__",
   "*.txt",
 ]
+
+[tool.mypy]
+exclude = [
+  "^venv/",
+]

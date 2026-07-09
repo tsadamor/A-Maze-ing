@@ -166,7 +166,9 @@ def braid_maze(
         for y, x in dead_ends:
             if _degree(maze, width, height, y, x, blocked_cells) != 1:
                 continue
-            candidates = _closed_neighbours(maze, width, height, y, x, blocked_cells)
+            candidates = _closed_neighbours(
+                maze, width, height, y, x, blocked_cells
+            )
             if not candidates:
                 if _touches_blocked_cell(y, x, blocked_cells):
                     continue
