@@ -65,6 +65,7 @@ def visualize_maze(maze, config, solver, steps=None):
 
     cm = 0
     show_path = False
+    displayed_path = [""]
 
     path_cells_anim = []
     path_anim_idx = [0]
@@ -147,12 +148,21 @@ def visualize_maze(maze, config, solver, steps=None):
         )
         m.mlx_do_sync(p)
 
+    def solve_display_path():
+        if config["PERFECT"]:
+            return solver.solve_maze(maze, cols, rows, config["ENTRY"], config["EXIT"])
+        return solver.solve_random_maze(
+            maze, cols, rows, config["ENTRY"], config["EXIT"]
+        )
+
     def render_maze(cmode, show_path, partial_path=None):
         path_cells = set()
         if partial_path is not None:
             path_cells = set(partial_path)
         elif show_path:
-            path = solver.solve_maze(maze, cols, rows, config["ENTRY"], config["EXIT"])
+            if not displayed_path[0]:
+                displayed_path[0] = solve_display_path()
+            path = displayed_path[0]
             cy, cx = config["ENTRY"]
             path_cells.add((cy, cx))
             for d in path:
@@ -178,6 +188,7 @@ def visualize_maze(maze, config, solver, steps=None):
             anim_maze = [row[:] for row in anim_initial]
             anim_frame[0] = 0
             anim_active[0] = True
+            displayed_path[0] = ""
         elif keynum == 99:  # C
             if not anim_active[0]:
                 cm = (cm + 1) % 7
@@ -186,11 +197,11 @@ def visualize_maze(maze, config, solver, steps=None):
             if not anim_active[0] and not path_anim_active[0]:
                 if show_path:
                     show_path = False
+                    displayed_path[0] = ""
                     render_maze(cm, show_path)
                 else:
-                    path_str = solver.solve_maze(
-                        maze, cols, rows, config["ENTRY"], config["EXIT"]
-                    )
+                    path_str = solve_display_path()
+                    displayed_path[0] = path_str
                     path_cells_anim.clear()
                     cy, cx = config["ENTRY"]
                     path_cells_anim.append((cy, cx))

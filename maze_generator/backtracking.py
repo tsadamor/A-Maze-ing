@@ -7,6 +7,10 @@ EAST = 1 << 1
 SOUTH = 1 << 2
 WEST = 1 << 3
 
+Maze = list[list[int]]
+StepDiff = list[tuple[int, int, int]]
+AnimationSteps = tuple[Maze, list[StepDiff]]
+
 
 def generate_maze_dfs(
     width: int, height: int, entry: tuple[int, int]
@@ -53,7 +57,11 @@ def generate_maze_dfs(
     return grid
 
 
-def generate_maze_dfs_with_steps(width: int, height: int, entry: tuple[int, int]):
+def generate_maze_dfs_with_steps(
+    width: int,
+    height: int,
+    entry: tuple[int, int],
+) -> tuple[Maze, AnimationSteps]:
     """バックトラッキングDFS法で迷路を生成し、(完成迷路, (初期状態, 差分リスト)) を返す。
 
     差分リストの各要素は [(y, x, new_value), ...] で、

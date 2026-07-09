@@ -1,3 +1,5 @@
+import random
+
 DIR_MAZE = [-1, 0, 1, 0, -1]
 DIR = ["N", "E", "S", "W"]
 DIR_WALL = [0, 1, 2, 3]
@@ -57,6 +59,41 @@ class MazeSolver:
             if found:
                 break
         return result
+
+    def solve_random_maze(
+        self,
+        maze: list[list[int]],
+        width: int,
+        height: int,
+        enter: tuple[int, int],
+        exit_coord: tuple[int, int],
+    ) -> str:
+        def is_valid_coord(h, w) -> bool:
+            if 0 <= h < height and 0 <= w < width:
+                return True
+            return False
+
+        stack = [(enter, "")]
+        visited = {enter}
+
+        while stack:
+            coord, ans = stack.pop()
+            if coord == exit_coord:
+                return ans
+
+            h, w = coord
+            directions = list(range(4))
+            random.shuffle(directions)
+
+            for d in directions:
+                nh, nw = h + DIR_MAZE[d], w + DIR_MAZE[d + 1]
+                if not is_valid_coord(nh, nw) or (nh, nw) in visited:
+                    continue
+                if maze[h][w] & (1 << DIR_WALL[d]):
+                    continue
+                visited.add((nh, nw))
+                stack.append(((nh, nw), ans + DIR[d]))
+        return ""
 
     def write_to_file(self):
         with open(self.file_name, "a", encoding="utf-8") as f:
