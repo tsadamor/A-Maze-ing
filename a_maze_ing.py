@@ -113,7 +113,6 @@ def visualize_maze(
 
     cm = 0
     show_path = False
-    player_pos = list(config["ENTRY"])
 
     path_cells_anim: list[tuple[int, int]] = []
     path_anim_idx = [0]
@@ -203,9 +202,7 @@ def visualize_maze(
                 x1 = x0 + cell_size
                 y1 = y0 + cell_size
 
-                if (y, x) == tuple(player_pos):
-                    fill_cell(x0, y0, x1, y1, (current_cmode + 3) % 7)
-                elif (
+                if (
                     (y, x) == config["ENTRY"]
                     or (y, x) == config["EXIT"]
                     or (y, x) in pattern_cells
@@ -225,17 +222,10 @@ def visualize_maze(
 
         m.mlx_put_image_to_window(p, win, img, 0, 0)
         text_y = height - 40
-        if tuple(player_pos) == config["EXIT"]:
-            msg = (
-                "*** CONGRATULATIONS! You reached the Exit! *** [R] to Restart"
-            )
-            m.mlx_string_put(p, win, 50, text_y, 0x00FF00, msg)
-        else:
-            msg = (
-                "[C]: Color [R]: Regenerate [P]: Path "
-                "[Arrows/WASD]: Move [Esc]: Exit"
-            )
-            m.mlx_string_put(p, win, 50, text_y, 0xFFFFFF, msg)
+        msg = (
+            "[C]: Color [R]: Regenerate [P]: Path [Esc]: Exit"
+        )
+        m.mlx_string_put(p, win, 50, text_y, 0xFFFFFF, msg)
         m.mlx_do_sync(p)
 
     def render_maze(
@@ -286,7 +276,6 @@ def visualize_maze(
                 anim_maze = [row[:] for row in anim_initial]
             anim_frame[0] = 0
             anim_active[0] = True
-            player_pos[0], player_pos[1] = config["ENTRY"]
             solver = MazeSolver(
                 maze,
                 config["OUTPUT_FILE"],
@@ -319,26 +308,6 @@ def visualize_maze(
                         1, len(path_cells_anim) // path_anim_total
                     )
                     path_anim_active[0] = True
-
-        move_map = {
-            65362: (Directions.N, -1, 0),  # Up
-            119: (Directions.N, -1, 0),    # W
-            65364: (Directions.S, 1, 0),   # Down
-            115: (Directions.S, 1, 0),    # S
-            65361: (Directions.W, 0, -1),  # Left
-            97: (Directions.W, 0, -1),     # A
-            65363: (Directions.E, 0, 1),   # Right
-            100: (Directions.E, 0, 1),     # D
-        }
-        if keynum in move_map:
-            if not anim_active[0] and not path_anim_active[0]:
-                d_dir, dr, dc = move_map[keynum]
-                r, c = player_pos[0], player_pos[1]
-                if not (maze[r][c] & (1 << d_dir)):
-                    nr, nc = r + dr, c + dc
-                    if 0 <= nr < rows and 0 <= nc < cols:
-                        player_pos[0], player_pos[1] = nr, nc
-                        render_maze(cm, show_path)
 
     def on_loop(param: Any) -> None:
         """Frame updates hook callback for animations.
