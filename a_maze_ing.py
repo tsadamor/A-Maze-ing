@@ -113,6 +113,8 @@ def visualize_maze(
 
     cm = 0
     show_path = False
+    cached_paths: list[str] = []
+    current_path_idx = [-1]
 
     path_cells_anim: list[tuple[int, int]] = []
     path_anim_idx = [0]
@@ -222,9 +224,16 @@ def visualize_maze(
 
         m.mlx_put_image_to_window(p, win, img, 0, 0)
         text_y = height - 40
-        msg = (
-            "[C]: Color [R]: Regenerate [P]: Path [Esc]: Exit"
-        )
+        if current_path_idx[0] != -1 and cached_paths:
+            msg = (
+                f"[C]: Color [R]: Regenerate [P]: Path "
+                f"(Solution {current_path_idx[0] + 1}/"
+                f"{len(cached_paths)}) [Esc]: Exit"
+            )
+        else:
+            msg = (
+                "[C]: Color [R]: Regenerate [P]: Path [Esc]: Exit"
+            )
         m.mlx_string_put(p, win, 50, text_y, 0xFFFFFF, msg)
         m.mlx_do_sync(p)
 
@@ -285,23 +294,39 @@ def visualize_maze(
                 config["HEIGHT"],
             )
             update_solved_path()
+            cached_paths.clear()
+            current_path_idx[0] = -1
         elif keynum == 99:
             if not anim_active[0]:
                 cm = (cm + 1) % 7
                 render_maze(cm, show_path)
         elif keynum == 112:
             if not anim_active[0] and not path_anim_active[0]:
-                if show_path:
+                if not cached_paths:
+                    if not config["PERFECT"]:
+                        cached_paths.extend(solver.solve_multiple_mazes(5))
+                    else:
+                        cached_paths.append(solver.solve_maze())
+
+                if not cached_paths:
+                    return
+
+                current_path_idx[0] += 1
+                if current_path_idx[0] >= len(cached_paths):
+                    current_path_idx[0] = -1
                     show_path = False
                     render_maze(cm, show_path)
                 else:
-                    path_str = solver.solve_maze()
+                    path_str = cached_paths[current_path_idx[0]]
+                    solved_path_cells.clear()
                     path_cells_anim.clear()
                     cy, cx = config["ENTRY"]
+                    solved_path_cells.add((cy, cx))
                     path_cells_anim.append((cy, cx))
                     for d in path_str:
                         cy += DIR_MAZE[Directions[d]]
                         cx += DIR_MAZE[Directions[d] + 1]
+                        solved_path_cells.add((cy, cx))
                         path_cells_anim.append((cy, cx))
                     path_anim_idx[0] = 0
                     path_cells_per_frame[0] = max(
