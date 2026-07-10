@@ -1,34 +1,30 @@
+"""Maze generation using wall expansion algorithm."""
+
 import random
-from enum import IntEnum
+from typing import Any
 
-from .utils import get_pattern_42
-
-WIDTH = 800
-HEIGHT = 600
-
-NORTH = 1 << 0
-EAST = 1 << 1
-SOUTH = 1 << 2
-WEST = 1 << 3
-
-
-class Direction(IntEnum):
-    NORTH = 1 << 0
-    EAST = 1 << 1
-    SOUTH = 1 << 2
-    WEST = 1 << 3
+from .utils import get_pattern_42, DirectionMask as Direction
 
 
 def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
+    """Generate maze using wall expansion method.
+
+    Args:
+        width (int): Maze width.
+        height (int): Maze height.
+
+    Returns:
+        list[list[int]]: 2D grid of integer wall masks.
+    """
     maze = [[0] * width for _ in range(height)]
-    connected_pillars = set()
+    connected_pillars: set[tuple[int, int]] = set()
 
     blocked_cells = get_pattern_42(width, height)
     if blocked_cells:
-        for cx, cy in blocked_cells:
-            connected_pillars.update(
-                [(cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)]
-            )
+        for cy, cx in blocked_cells:
+            connected_pillars.update([
+                (cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)
+            ])
             maze[cy][cx] = 15
 
             if cy > 0:
@@ -43,25 +39,29 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
     for w in range(width):
         maze[0][w] |= Direction.NORTH
         maze[height - 1][w] |= Direction.SOUTH
-        connected_pillars.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
+        connected_pillars.update([
+            (0, w), (0, w + 1), (height, w), (height, w + 1)
+        ])
 
     for h in range(height):
         maze[h][0] |= Direction.WEST
         maze[h][width - 1] |= Direction.EAST
-        connected_pillars.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
+        connected_pillars.update([
+            (h, 0), (h + 1, 0), (h, width), (h + 1, width)
+        ])
 
-    remaining_pillars = [(h, w) for h in range(1, height) for w in range(1, width)]
-    random.shuffle(remaining_pillars)
+    remaining = [(h, w) for h in range(1, height) for w in range(1, width)]
+    random.shuffle(remaining)
 
-    while remaining_pillars:
-        start_h, start_w = remaining_pillars.pop()
+    while remaining:
+        start_h, start_w = remaining.pop()
 
         if (start_h, start_w) in connected_pillars:
             continue
 
         ph, pw = start_h, start_w
         path_history = [(ph, pw)]
-        temp_walls = []
+        temp_walls: list[tuple[int, int, int, int]] = []
 
         while True:
             dirs = [(-1, 0), (0, 1), (1, 0), (0, -1)]
@@ -80,20 +80,19 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
                 path_history.append((nh, nw))
 
                 if (nh, nw) in connected_pillars:
-                    for from_h, from_w, to_h, to_w in temp_walls:
-                        if from_w == to_w:
-                            min_h = min(from_h, to_h)
-                            if from_w > 0:
-                                maze[min_h][from_w - 1] |= Direction.EAST
-                            if from_w < width:
-                                maze[min_h][from_w] |= Direction.WEST
-
+                    for fh, fw, th, tw in temp_walls:
+                        if fw == tw:
+                            min_h = min(fh, th)
+                            if fw > 0:
+                                maze[min_h][fw - 1] |= Direction.EAST
+                            if fw < width:
+                                maze[min_h][fw] |= Direction.WEST
                         else:
-                            min_w = min(from_w, to_w)
-                            if from_h > 0:
-                                maze[from_h - 1][min_w] |= Direction.SOUTH
-                            if from_h < height:
-                                maze[from_h][min_w] |= Direction.NORTH
+                            min_w = min(fw, tw)
+                            if fh > 0:
+                                maze[fh - 1][min_w] |= Direction.SOUTH
+                            if fh < height:
+                                maze[fh][min_w] |= Direction.NORTH
 
                     for p in path_history:
                         connected_pillars.add(p)
@@ -105,29 +104,37 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
                     moved = True
                     break
 
-            if not moved:
-                break
-            if (nh, nw) in connected_pillars:
+            if not moved or (nh, nw) in connected_pillars:
                 break
 
     return maze
 
 
-def gen_maze_wall_expand_with_steps(width: int, height: int):
-    """壁伸長法で迷路を生成し、(完成迷路, (初期状態, 差分リスト)) を返す。
+def gen_maze_wall_expand_with_steps(
+    width: int,
+    height: int,
+) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
+    """Generate maze using wall expansion method with step history.
 
-    差分リストの各要素は [(y, x, new_value), ...] で、
-    そのステップで変更されたセルだけを記録する。
+    Args:
+        width (int): Maze width.
+        height (int): Maze height.
+
+    Returns:
+        tuple[list[list[int]],
+        tuple[list[list[int]], list[list[Any]]]]: A tuple containing:
+            - list[list[int]]: The final grid.
+            - tuple: A tuple of (initial grid copy, list of step diffs).
     """
     maze = [[0] * width for _ in range(height)]
-    connected_pillars = set()
+    connected_pillars: set[tuple[int, int]] = set()
 
     blocked_cells = get_pattern_42(width, height)
     if blocked_cells:
-        for cx, cy in blocked_cells:
-            connected_pillars.update(
-                [(cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)]
-            )
+        for cy, cx in blocked_cells:
+            connected_pillars.update([
+                (cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)
+            ])
             maze[cy][cx] = 15
 
             if cy > 0:
@@ -142,28 +149,32 @@ def gen_maze_wall_expand_with_steps(width: int, height: int):
     for w in range(width):
         maze[0][w] |= Direction.NORTH
         maze[height - 1][w] |= Direction.SOUTH
-        connected_pillars.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
+        connected_pillars.update([
+            (0, w), (0, w + 1), (height, w), (height, w + 1)
+        ])
 
     for h in range(height):
         maze[h][0] |= Direction.WEST
         maze[h][width - 1] |= Direction.EAST
-        connected_pillars.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
+        connected_pillars.update([
+            (h, 0), (h + 1, 0), (h, width), (h + 1, width)
+        ])
 
     initial = [row[:] for row in maze]
-    diffs = []
+    diffs: list[list[Any]] = []
 
-    remaining_pillars = [(h, w) for h in range(1, height) for w in range(1, width)]
-    random.shuffle(remaining_pillars)
+    remaining = [(h, w) for h in range(1, height) for w in range(1, width)]
+    random.shuffle(remaining)
 
-    while remaining_pillars:
-        start_h, start_w = remaining_pillars.pop()
+    while remaining:
+        start_h, start_w = remaining.pop()
 
         if (start_h, start_w) in connected_pillars:
             continue
 
         ph, pw = start_h, start_w
         path_history = [(ph, pw)]
-        temp_walls = []
+        temp_walls: list[tuple[int, int, int, int]] = []
 
         while True:
             dirs = [(-1, 0), (0, 1), (1, 0), (0, -1)]
@@ -183,30 +194,36 @@ def gen_maze_wall_expand_with_steps(width: int, height: int):
 
                 if (nh, nw) in connected_pillars:
                     diff = []
-                    for from_h, from_w, to_h, to_w in temp_walls:
-                        if from_w == to_w:
-                            min_h = min(from_h, to_h)
-                            if from_w > 0:
-                                maze[min_h][from_w - 1] |= Direction.EAST
-                                diff.append((min_h, from_w - 1, maze[min_h][from_w - 1]))
-                            if from_w < width:
-                                maze[min_h][from_w] |= Direction.WEST
-                                diff.append((min_h, from_w, maze[min_h][from_w]))
-
+                    for fh, fw, th, tw in temp_walls:
+                        if fw == tw:
+                            min_h = min(fh, th)
+                            if fw > 0:
+                                maze[min_h][fw - 1] |= Direction.EAST
+                                diff.append((
+                                    min_h, fw - 1, maze[min_h][fw - 1]
+                                ))
+                            if fw < width:
+                                maze[min_h][fw] |= Direction.WEST
+                                diff.append((
+                                    min_h, fw, maze[min_h][fw]
+                                ))
                         else:
-                            min_w = min(from_w, to_w)
-                            if from_h > 0:
-                                maze[from_h - 1][min_w] |= Direction.SOUTH
-                                diff.append((from_h - 1, min_w, maze[from_h - 1][min_w]))
-                            if from_h < height:
-                                maze[from_h][min_w] |= Direction.NORTH
-                                diff.append((from_h, min_w, maze[from_h][min_w]))
+                            min_w = min(fw, tw)
+                            if fh > 0:
+                                maze[fh - 1][min_w] |= Direction.SOUTH
+                                diff.append((
+                                    fh - 1, min_w, maze[fh - 1][min_w]
+                                ))
+                            if fh < height:
+                                maze[fh][min_w] |= Direction.NORTH
+                                diff.append((
+                                    fh, min_w, maze[fh][min_w]
+                                ))
 
                     for p in path_history:
                         connected_pillars.add(p)
 
                     diffs.append(diff)
-
                     moved = True
                     break
                 else:
@@ -214,9 +231,7 @@ def gen_maze_wall_expand_with_steps(width: int, height: int):
                     moved = True
                     break
 
-            if not moved:
-                break
-            if (nh, nw) in connected_pillars:
+            if not moved or (nh, nw) in connected_pillars:
                 break
 
     return maze, (initial, diffs)

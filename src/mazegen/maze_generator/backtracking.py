@@ -1,18 +1,28 @@
+"""Backtracking DFS maze generation algorithm."""
+
 import random
+from typing import Any
 
 from .utils import get_pattern_42
 
-NORTH = 1 << 0
-EAST = 1 << 1
-SOUTH = 1 << 2
-WEST = 1 << 3
-
 
 def generate_maze_dfs(
-    width: int, height: int, entry: tuple[int, int]
+    width: int,
+    height: int,
+    entry: tuple[int, int],
 ) -> list[list[int]]:
+    """Generate a perfect maze using randomized depth-first search.
+
+    Args:
+        width (int): Number of columns.
+        height (int): Number of rows.
+        entry (tuple[int, int]): Entry coordinate as (row, col).
+
+    Returns:
+        list[list[int]]: 2D list of integer wall masks.
+    """
     grid = [[15 for _ in range(width)] for _ in range(height)]
-    directions = [(0, 0, -1), (1, 1, 0), (2, 0, 1), (3, -1, 0)]
+    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
     stack = [entry]
     visited = {entry}
     blocked_area = get_pattern_42(width, height)
@@ -21,46 +31,55 @@ def generate_maze_dfs(
         visited.update(blocked_area)
 
     while stack:
-        current = stack[-1]
-        x, y = current
+        row, col = stack[-1]
         valid_neighbors = []
 
-        for bit_pos, dx, dy in directions:
-            nx = x + dx
-            ny = y + dy
+        for bit_pos, dr, dc in directions:
+            nr = row + dr
+            nc = col + dc
             if (
-                nx >= 0
-                and nx < width
-                and ny >= 0
-                and ny < height
-                and (nx, ny) not in visited
+                0 <= nr < height
+                and 0 <= nc < width
+                and (nr, nc) not in visited
             ):
-                valid_neighbors.append((bit_pos, nx, ny))
+                valid_neighbors.append((bit_pos, nr, nc))
         if valid_neighbors:
-            new = random.choice(valid_neighbors)
+            chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        bit_pos, nx, ny = new
-        opposit_bit_pos = (bit_pos + 2) % 4
-        grid[y][x] ^= 1 << bit_pos
-        grid[ny][nx] ^= 1 << opposit_bit_pos
+        bit_pos, nr, nc = chosen
+        opposite_bit_pos = (bit_pos + 2) % 4
+        grid[row][col] ^= 1 << bit_pos
+        grid[nr][nc] ^= 1 << opposite_bit_pos
 
-        stack.append((nx, ny))
-        visited.add((nx, ny))
+        stack.append((nr, nc))
+        visited.add((nr, nc))
 
     return grid
 
 
-def generate_maze_dfs_with_steps(width: int, height: int, entry: tuple[int, int]):
-    """バックトラッキングDFS法で迷路を生成し、(完成迷路, (初期状態, 差分リスト)) を返す。
+def generate_maze_dfs_with_steps(
+    width: int,
+    height: int,
+    entry: tuple[int, int],
+) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
+    """Generate a perfect maze using DFS and return step history for animation.
 
-    差分リストの各要素は [(y, x, new_value), ...] で、
-    そのステップで変更されたセルだけを記録する。
+    Args:
+        width (int): Number of columns.
+        height (int): Number of rows.
+        entry (tuple[int, int]): Entry coordinate as (row, col).
+
+    Returns:
+        tuple[list[list[int]],
+        tuple[list[list[int]], list[list[Any]]]]: A tuple containing:
+            - list[list[int]]: The final grid.
+            - tuple: A tuple of (initial grid copy, list of step diffs).
     """
     grid = [[15 for _ in range(width)] for _ in range(height)]
-    directions = [(0, 0, -1), (1, 1, 0), (2, 0, 1), (3, -1, 0)]
+    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
     stack = [entry]
     visited = {entry}
     blocked_area = get_pattern_42(width, height)
@@ -68,41 +87,39 @@ def generate_maze_dfs_with_steps(width: int, height: int, entry: tuple[int, int]
     if blocked_area:
         visited.update(blocked_area)
 
-    # 全壁の初期状態を1回だけコピー
     initial = [row[:] for row in grid]
-    diffs = []
+    diffs: list[list[Any]] = []
 
     while stack:
-        current = stack[-1]
-        x, y = current
+        row, col = stack[-1]
         valid_neighbors = []
 
-        for bit_pos, dx, dy in directions:
-            nx = x + dx
-            ny = y + dy
+        for bit_pos, dr, dc in directions:
+            nr = row + dr
+            nc = col + dc
             if (
-                nx >= 0
-                and nx < width
-                and ny >= 0
-                and ny < height
-                and (nx, ny) not in visited
+                0 <= nr < height
+                and 0 <= nc < width
+                and (nr, nc) not in visited
             ):
-                valid_neighbors.append((bit_pos, nx, ny))
+                valid_neighbors.append((bit_pos, nr, nc))
         if valid_neighbors:
-            new = random.choice(valid_neighbors)
+            chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        bit_pos, nx, ny = new
-        opposit_bit_pos = (bit_pos + 2) % 4
-        grid[y][x] ^= 1 << bit_pos
-        grid[ny][nx] ^= 1 << opposit_bit_pos
+        bit_pos, nr, nc = chosen
+        opposite_bit_pos = (bit_pos + 2) % 4
+        grid[row][col] ^= 1 << bit_pos
+        grid[nr][nc] ^= 1 << opposite_bit_pos
 
-        stack.append((nx, ny))
-        visited.add((nx, ny))
+        stack.append((nr, nc))
+        visited.add((nr, nc))
 
-        # 変更された2セルの差分だけ記録
-        diffs.append([(y, x, grid[y][x]), (ny, nx, grid[ny][nx])])
+        diffs.append([
+            (row, col, grid[row][col]),
+            (nr, nc, grid[nr][nc]),
+        ])
 
     return grid, (initial, diffs)
