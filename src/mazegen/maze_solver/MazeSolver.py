@@ -41,6 +41,7 @@ class MazeSolver:
         self.exit_coord = exit_coord
         self.width = width
         self.height = height
+        self._cached_path: str | None = None
 
     def solve_maze(self) -> str:
         """Find shortest valid path from enter to exit_coord using BFS.
@@ -48,6 +49,9 @@ class MazeSolver:
         Returns:
             str: String of directions ('N', 'E', 'S', 'W') for shortest path.
         """
+        if self._cached_path is not None:
+            return self._cached_path
+
         def is_valid_coord(h: int, w: int) -> bool:
             """Check if coordinate is within maze boundaries."""
             return 0 <= h < self.height and 0 <= w < self.width
@@ -77,4 +81,5 @@ class MazeSolver:
             if found:
                 break
 
+        self._cached_path = result
         return result

@@ -91,6 +91,21 @@ def visualize_maze(
     cols = len(maze[0])
     steps_per_frame = max(1, rows * cols // 30)
 
+    pattern_cells = get_pattern_42(cols, rows)
+    solved_path_cells: set[tuple[int, int]] = set()
+
+    def update_solved_path() -> None:
+        solved_path_cells.clear()
+        path = solver.solve_maze()
+        cy, cx = config["ENTRY"]
+        solved_path_cells.add((cy, cx))
+        for d in path:
+            cy += DIR_MAZE[Directions[d]]
+            cx += DIR_MAZE[Directions[d] + 1]
+            solved_path_cells.add((cy, cx))
+
+    update_solved_path()
+
     draw_h = height - 50
     cell_size = min(width // cols, draw_h // rows)
     offset_x = (width - cols * cell_size) // 2
@@ -179,7 +194,6 @@ def visualize_maze(
                 cells in path.
         """
         clear_image()
-        pattern_cells = get_pattern_42(cols, rows)
 
         for y in range(rows):
             for x in range(cols):
@@ -241,13 +255,7 @@ def visualize_maze(
         if partial_path is not None:
             path_cells = set(partial_path)
         elif show_path:
-            path = solver.solve_maze()
-            cy, cx = config["ENTRY"]
-            path_cells.add((cy, cx))
-            for d in path:
-                cy += DIR_MAZE[Directions[d]]
-                cx += DIR_MAZE[Directions[d] + 1]
-                path_cells.add((cy, cx))
+            path_cells = solved_path_cells
 
         draw_maze_structure(maze, cmode, path_cells)
 
@@ -264,7 +272,8 @@ def visualize_maze(
             keynum (int): The pressed key code.
             param (Any): Additional parameter passed by MLX.
         """
-        nonlocal maze, cm, show_path, anim_initial, anim_diffs, anim_maze
+        nonlocal maze, cm, show_path, anim_initial, anim_diffs
+        nonlocal anim_maze, solver
         if keynum == 65307:
             cleanup()
         elif keynum == 114:
@@ -278,6 +287,15 @@ def visualize_maze(
             anim_frame[0] = 0
             anim_active[0] = True
             player_pos[0], player_pos[1] = config["ENTRY"]
+            solver = MazeSolver(
+                maze,
+                config["OUTPUT_FILE"],
+                config["ENTRY"],
+                config["EXIT"],
+                config["WIDTH"],
+                config["HEIGHT"],
+            )
+            update_solved_path()
         elif keynum == 99:
             if not anim_active[0]:
                 cm = (cm + 1) % 7

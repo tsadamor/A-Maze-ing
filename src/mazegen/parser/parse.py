@@ -32,6 +32,34 @@ class MazeConfig(BaseModel):
     SEED: int | None = None
     ALGORITHM: str | None = None
 
+    @field_validator("WIDTH", mode="before")
+    @classmethod
+    def parse_width(cls, v: Any) -> int:
+        """Validate that width is a positive integer."""
+        try:
+            val = int(v)
+        except (ValueError, TypeError):
+            raise ValueError("WIDTH must be a positive integer.")
+        if val <= 1:
+            raise ValueError(
+                "WIDTH must be a positive integer greater than 1."
+            )
+        return val
+
+    @field_validator("HEIGHT", mode="before")
+    @classmethod
+    def parse_height(cls, v: Any) -> int:
+        """Validate that height is a positive integer."""
+        try:
+            val = int(v)
+        except (ValueError, TypeError):
+            raise ValueError("HEIGHT must be a positive integer.")
+        if val <= 1:
+            raise ValueError(
+                "HEIGHT must be a positive integer greater than 1."
+            )
+        return val
+
     @field_validator("ENTRY", "EXIT", mode="before")
     @classmethod
     def parse_coordinate(cls, v: Any) -> tuple[int, int]:
