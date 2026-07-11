@@ -3,12 +3,13 @@
 import os
 import sys
 from typing import Any
+
 from pydantic import (
     BaseModel,
     Field,
     ValidationError,
+    ValidationInfo,
     field_validator,
-    model_validator,
 )
 
 from src.mazegen.utils import get_pattern_42
@@ -94,42 +95,33 @@ class MazeConfig(BaseModel):
             "PERFECT must be a boolean value (true/false, 1/0, yes/no)."
         )
 
-    @model_validator(mode="after")
-    def validate_maze_constraints(self) -> "MazeConfig":
-        """Perform semantic validation on the maze configuration."""
-        width = self.WIDTH
-        height = self.HEIGHT
-        entry_row, entry_col = self.ENTRY
-        exit_row, exit_col = self.EXIT
+    @field_validator("ENTRY", "EXIT")
+    @classmethod
+    def validate_coordinate_constraints(
+        cls, coordinate: tuple[int, int], info: ValidationInfo
+    ) -> tuple[int, int]:
+        """Validate coordinate bounds, uniqueness, and pattern collision."""
+        width = info.data.get("WIDTH")
+        height = info.data.get("HEIGHT")
+        if width is None or height is None:
+            return coordinate
+        row, col = coordinate
+        field_name = info.field_name
 
-        # Bound checks
-        if not (0 <= entry_col < width and 0 <= entry_row < height):
+        if not (0 <= col < width and 0 <= row < height):
             raise ValueError(
-                f"ENTRY coordinate {self.ENTRY} (row, col) is out of bounds "
+                f"{field_name} coordinate {coordinate} (row, col) is out of "
+                "bounds "
                 f"for maze of size {width}x{height}."
             )
-        if not (0 <= exit_col < width and 0 <= exit_row < height):
-            raise ValueError(
-                f"EXIT coordinate {self.EXIT} (row, col) is out of bounds "
-                f"for maze of size {width}x{height}."
-            )
-
-        # Duplicate check
-        if self.ENTRY == self.EXIT:
+        if field_name == "EXIT" and coordinate == info.data.get("ENTRY"):
             raise ValueError("ENTRY and EXIT coordinates cannot be the same.")
-
-        # Pattern 42 collision check
         pattern_42 = get_pattern_42(width, height)
-        if self.ENTRY in pattern_42:
+        if coordinate in pattern_42:
             raise ValueError(
-                "ENTRY coordinate cannot be inside the '42' pattern."
+                f"{field_name} coordinate cannot be inside the '42' pattern."
             )
-        if self.EXIT in pattern_42:
-            raise ValueError(
-                "EXIT coordinate cannot be inside the '42' pattern."
-            )
-
-        return self
+        return coordinate
 
 
 def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
@@ -197,11 +189,8 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
             joined = ', '.join(missing_fields)
             print(f"Aborted: Missing configuration fields: {joined}")
         elif other_errors:
-            print(ERROR_MSG)
+            print(ERROR_MSG, file=sys.stderr)
 
         for loc, msg in other_errors:
-            print(
-                f"  - Validation Error on '{loc}': {msg}",
-                file=sys.stderr
-            )
+            print(f"Validation Error on '{loc}': {msg}", file=sys.stderr)
         return (False, {})
