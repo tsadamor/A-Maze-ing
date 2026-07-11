@@ -1,4 +1,57 @@
-"""Maze generator module providing standalone MazeGenerator class."""
+"""Maze generator module providing standalone MazeGenerator class.
+
+This module provides the `MazeGenerator` class, which handles the generation
+of various types of mazes (perfect mazes using Depth-First Search
+or Wall Expansion, and playable braided mazes using a Pac-Man style
+algorithm).
+
+It supports customizing dimensions, random seed, entry/exit coordinates,
+and output destinations.
+
+How to use:
+-----------
+1. **Instantiate the generator**:
+   Pass either a configuration dictionary (e.g. parsed from a config file) or
+   direct keyword arguments (e.g., `width`, `height`, `seed`, etc.).
+
+2. **Generate the maze**:
+   Call `generate_maze()` to produce the structure.
+
+3. **Access the structure**:
+   Access the grid via the returned value or `get_maze()`. The structure is a
+   2D list of integer wall masks.
+
+4. **Access the solution**:
+   Get the shortest path either as a string of cardinal directions
+   ('N', 'E', 'S', 'W') via `solve_maze()` or as a sequence of `(row, col)`
+   coordinate tuples via `get_solution_path()`.
+
+Example:
+--------
+    from src.mazegen.maze_generator import MazeGenerator
+
+    # Create a 20x15 perfect maze with a seed
+    generator = MazeGenerator(
+        width=20,
+        height=15,
+        entry=(0, 0),
+        exit_coord=(14, 19),
+        perfect=True,
+        seed=42,
+        algorithm="dfs"
+    )
+
+    # Generate the grid structure
+    grid = generator.generate_maze()
+
+    # Access the generated grid cell (row 0, col 0)
+    start_cell_mask = grid[0][0]
+
+    # Access the solution path
+    path_directions = generator.solve_maze()  # e.g. "SSEEES..."
+    # e.g. [(0,0), (1,0), ...]
+    path_coordinates = generator.get_solution_path()
+"""
 
 import random
 import sys
@@ -45,22 +98,34 @@ _ALGORITHMS_WITH_STEPS: dict[
 
 
 class MazeGenerator:
-    """Standalone MazeGenerator class for creating perfect or Pac-Man mazes.
+    """A configurable maze generator for perfect and braided mazes.
 
-    Can be initialized either from a configuration dictionary or via keyword
-    arguments.
+    Instantiates a generator that can create standard perfect mazes (using
+    DFS or Wilson's Wall Expansion) or multi-route playable boards containing
+    loops.
+
+    To instantiate, you can either provide:
+      - A dictionary matching the configuration file format (all uppercase
+        keys).
+      - Direct keyword arguments.
 
     Attributes:
-        width (int): Maze width in cells.
-        height (int): Maze height in cells.
+        width (int): Maze width in cells (number of columns).
+        height (int): Maze height in cells (number of rows).
         entry (tuple[int, int]): Entry coordinate as (row, col).
         exit_coord (tuple[int, int]): Exit coordinate as (row, col).
-        output_file (str): Output file path.
-        perfect (bool): Whether to generate a perfect maze.
-        seed (int | None): Optional random seed for reproducibility.
-        algorithm (str | None): Specific algorithm
-            ('dfs', 'pacman', 'wall_expand').
-        maze (list[list[int]]): 2D list of integer wall masks.
+        output_file (str): Output file path to save the generated maze.
+        perfect (bool): True to generate a perfect maze (no loops, single
+            path), False to generate a braided playable maze.
+        seed (int | None): Optional random seed for deterministic generation.
+        algorithm (str | None): Specific algorithm type ('dfs', 'pacman',
+            'wall_expand').
+        maze (list[list[int]]): 2D list of integer wall masks. Each cell is
+            represented by a 4-bit integer mask indicating closed walls:
+                - Bit 0 (val 1): North wall is closed
+                - Bit 1 (val 2): East wall is closed
+                - Bit 2 (val 4): South wall is closed
+                - Bit 3 (val 8): West wall is closed
     """
 
     def __init__(

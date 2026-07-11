@@ -1,19 +1,76 @@
-"""Maze solver module using breadth-first search."""
+"""Maze solver module using breadth-first search.
+
+This module provides the `MazeSolver` class, which calculates the
+shortest path from an entry cell to an exit cell in a given 2D grid of
+wall masks. It uses a Breadth-First Search (BFS) algorithm, guaranteeing
+that the shortest path is found.
+
+Graph Representation & Wall Encoding:
+-------------------------------------
+The maze is modeled as a grid of cell nodes where open walls are the
+graph edges. Each cell has an integer value between 0 and 15 representing
+its walls as bitwise flags:
+  - Bit 0 (val 1): North wall is closed
+  - Bit 1 (val 2): East wall is closed
+  - Bit 2 (val 4): South wall is closed
+  - Bit 3 (val 8): West wall is closed
+
+If a wall flag is unset (0), the passage is open, allowing traversal
+to the adjacent cell. Otherwise, the passage is blocked.
+
+Usage Example:
+--------------
+    from src.mazegen.maze_solver import MazeSolver
+
+    # 1. Provide a 2x2 maze grid:
+    # Row 0: cell 0 (N, W closed -> 9), cell 1 (N, E closed -> 3)
+    # Row 1: cell 0 (S, W closed -> 12), cell 1 (S, E closed -> 6)
+    # (Passage exists vertically between (0,0)-(1,0), (0,1)-(1,1)
+    # and horizontally (0,0)-(0,1), (1,0)-(1,1))
+    # Wait, let's say the wall between (0,0) and (0,1) is open:
+    # (0,0): North & West closed -> 9
+    # (0,1): North & East closed -> 3
+    # The solver will navigate using these open paths.
+    maze_grid = [
+        [9, 3],
+        [12, 6]
+    ]
+
+    # 2. Initialize the solver
+    solver = MazeSolver(
+        maze=maze_grid,
+        file_name="solution.txt",
+        enter=(0, 0),
+        exit_coord=(1, 1),
+        width=2,
+        height=2
+    )
+
+    # 3. Solve the maze to get the direction string
+    path = solver.solve_maze()
+    # e.g., "SE" or "ES" depending on layout
+    print("Shortest path directions:", path)
+"""
 
 from collections import deque
 from src.mazegen.maze_generator.utils import DIR_MAZE, DIR_NAMES
 
 
 class MazeSolver:
-    """Solver class that finds the shortest path through a maze using BFS.
+    """Finds the shortest path through a 2D grid representation of a maze.
+
+    Explores all reachable paths from the specified start point ('enter')
+    to the destination ('exit_coord') and caches the result for future queries.
 
     Attributes:
-        maze (list[list[int]]): 2D list of wall masks.
-        file_name (str): Path to output file.
-        enter (tuple[int, int]): Start coordinates (row, col).
-        exit_coord (tuple[int, int]): End coordinates (row, col).
-        width (int): Maze width.
-        height (int): Maze height.
+        maze (list[list[int]]): 2D list of wall masks where set bits indicate
+            closed walls.
+        file_name (str): Path to the output file where output results might
+            be saved.
+        enter (tuple[int, int]): Start coordinate formatted as (row, col).
+        exit_coord (tuple[int, int]): End coordinate formatted as (row, col).
+        width (int): Number of columns in the maze grid.
+        height (int): Number of rows in the maze grid.
     """
 
     def __init__(
