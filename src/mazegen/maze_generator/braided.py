@@ -4,7 +4,7 @@ import random
 from typing import Any
 
 from .backtracking import generate_maze_dfs, generate_maze_dfs_with_steps
-from .utils import get_pattern_42, DirectionMask
+from src.mazegen.utils import get_pattern_42, DirectionMask
 
 
 def _count_open_walls(mask: int) -> int:

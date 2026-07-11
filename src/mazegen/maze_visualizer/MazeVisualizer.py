@@ -2,7 +2,7 @@
 
 from typing import Any
 from src.mazegen.maze_generator.MazeGenerator import MazeGenerator
-from src.mazegen.maze_generator.utils import (
+from src.mazegen.utils import (
     DIR_MAZE,
     Directions,
     get_pattern_42,

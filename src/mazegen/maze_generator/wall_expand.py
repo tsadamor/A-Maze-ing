@@ -3,7 +3,7 @@
 import random
 from typing import Any
 
-from .utils import get_pattern_42, DirectionMask as Direction
+from src.mazegen.utils import get_pattern_42, DirectionMask as Direction
 
 
 def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:

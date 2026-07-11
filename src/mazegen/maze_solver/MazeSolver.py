@@ -53,7 +53,7 @@ Usage Example:
 """
 
 from collections import deque
-from src.mazegen.maze_generator.utils import DIR_MAZE, DIR_NAMES
+from src.mazegen.utils import DIR_MAZE, DIR_NAMES
 
 
 class MazeSolver:

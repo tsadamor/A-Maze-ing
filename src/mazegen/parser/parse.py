@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from src.mazegen.maze_generator.utils import get_pattern_42
+from src.mazegen.utils import get_pattern_42
 
 ERROR_MSG = "Aborted: Bad Configuration File"
 
