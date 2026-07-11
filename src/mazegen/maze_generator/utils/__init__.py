@@ -1,10 +1,7 @@
 from .patterns import get_pattern_42
-from .directions import Directions, DirectionMask, DIR_MAZE, DIR_NAMES
+from .directions import DirectionMask
 
 __all__ = [
     "get_pattern_42",
-    "Directions",
     "DirectionMask",
-    "DIR_MAZE",
-    "DIR_NAMES",
 ]

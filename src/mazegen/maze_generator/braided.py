@@ -4,7 +4,7 @@ import random
 from typing import Any
 
 from .backtracking import generate_maze_dfs, generate_maze_dfs_with_steps
-from .utils import get_pattern_42
+from .utils import get_pattern_42, DirectionMask
 
 
 def _count_open_walls(mask: int) -> int:
@@ -16,7 +16,14 @@ def _count_open_walls(mask: int) -> int:
     Returns:
         int: The number of open walls (0-bits) in the mask.
     """
-    return sum(1 for b in range(4) if (mask & (1 << b)) == 0)
+    return sum(
+        1 for m in (
+            DirectionMask.NORTH,
+            DirectionMask.EAST,
+            DirectionMask.SOUTH,
+            DirectionMask.WEST
+        ) if (mask & m) == 0
+    )
 
 
 def generate_maze_pacman(
@@ -40,7 +47,12 @@ def generate_maze_pacman(
     """
     grid = generate_maze_dfs(width, height, entry)
     blocked_area = get_pattern_42(width, height)
-    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
+    directions = [
+        (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
+        (DirectionMask.EAST, DirectionMask.WEST, 0, 1),
+        (DirectionMask.SOUTH, DirectionMask.NORTH, 1, 0),
+        (DirectionMask.WEST, DirectionMask.EAST, 0, -1),
+    ]
 
     while True:
         dead_ends = []
@@ -59,16 +71,16 @@ def generate_maze_pacman(
             candidates = []
             dead_end_candidates = []
 
-            for bit_pos, dr, dc in directions:
+            for mask, opp_mask, dr, dc in directions:
                 nr, nc = r + dr, c + dc
                 if not (0 <= nr < height and 0 <= nc < width):
                     continue
                 if (nr, nc) in blocked_area:
                     continue
-                if grid[r][c] & (1 << bit_pos):
-                    candidates.append((bit_pos, nr, nc))
+                if grid[r][c] & mask:
+                    candidates.append((mask, opp_mask, nr, nc))
                     if _count_open_walls(grid[nr][nc]) == 1:
-                        dead_end_candidates.append((bit_pos, nr, nc))
+                        dead_end_candidates.append((mask, opp_mask, nr, nc))
 
             chosen = None
             if dead_end_candidates:
@@ -77,10 +89,9 @@ def generate_maze_pacman(
                 chosen = random.choice(candidates)
 
             if chosen is not None:
-                bit_pos, nr, nc = chosen
-                opp_bit = (bit_pos + 2) % 4
-                grid[r][c] &= ~(1 << bit_pos)
-                grid[nr][nc] &= ~(1 << opp_bit)
+                mask, opp_mask, nr, nc = chosen
+                grid[r][c] &= ~mask
+                grid[nr][nc] &= ~opp_mask
                 removed_any = True
 
         if not removed_any:
@@ -109,7 +120,12 @@ def generate_maze_pacman_with_steps(
     """
     grid, (initial, diffs) = generate_maze_dfs_with_steps(width, height, entry)
     blocked_area = get_pattern_42(width, height)
-    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
+    directions = [
+        (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
+        (DirectionMask.EAST, DirectionMask.WEST, 0, 1),
+        (DirectionMask.SOUTH, DirectionMask.NORTH, 1, 0),
+        (DirectionMask.WEST, DirectionMask.EAST, 0, -1),
+    ]
 
     while True:
         dead_ends = []
@@ -128,16 +144,16 @@ def generate_maze_pacman_with_steps(
             candidates = []
             dead_end_candidates = []
 
-            for bit_pos, dr, dc in directions:
+            for mask, opp_mask, dr, dc in directions:
                 nr, nc = r + dr, c + dc
                 if not (0 <= nr < height and 0 <= nc < width):
                     continue
                 if (nr, nc) in blocked_area:
                     continue
-                if grid[r][c] & (1 << bit_pos):
-                    candidates.append((bit_pos, nr, nc))
+                if grid[r][c] & mask:
+                    candidates.append((mask, opp_mask, nr, nc))
                     if _count_open_walls(grid[nr][nc]) == 1:
-                        dead_end_candidates.append((bit_pos, nr, nc))
+                        dead_end_candidates.append((mask, opp_mask, nr, nc))
 
             chosen = None
             if dead_end_candidates:
@@ -146,10 +162,9 @@ def generate_maze_pacman_with_steps(
                 chosen = random.choice(candidates)
 
             if chosen is not None:
-                bit_pos, nr, nc = chosen
-                opp_bit = (bit_pos + 2) % 4
-                grid[r][c] &= ~(1 << bit_pos)
-                grid[nr][nc] &= ~(1 << opp_bit)
+                mask, opp_mask, nr, nc = chosen
+                grid[r][c] &= ~mask
+                grid[nr][nc] &= ~opp_mask
                 diffs.append([
                     (r, c, grid[r][c]),
                     (nr, nc, grid[nr][nc]),

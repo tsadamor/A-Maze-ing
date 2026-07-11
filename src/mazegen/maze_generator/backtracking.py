@@ -3,7 +3,7 @@
 import random
 from typing import Any
 
-from .utils import get_pattern_42
+from .utils import get_pattern_42, DirectionMask
 
 
 def generate_maze_dfs(
@@ -21,8 +21,19 @@ def generate_maze_dfs(
     Returns:
         list[list[int]]: 2D list of integer wall masks.
     """
-    grid = [[15 for _ in range(width)] for _ in range(height)]
-    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
+    ALL_WALLS = (
+        DirectionMask.NORTH
+        | DirectionMask.EAST
+        | DirectionMask.SOUTH
+        | DirectionMask.WEST
+    )
+    grid = [[ALL_WALLS for _ in range(width)] for _ in range(height)]
+    directions = [
+        (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
+        (DirectionMask.EAST, DirectionMask.WEST, 0, 1),
+        (DirectionMask.SOUTH, DirectionMask.NORTH, 1, 0),
+        (DirectionMask.WEST, DirectionMask.EAST, 0, -1),
+    ]
     stack = [entry]
     visited = {entry}
     blocked_area = get_pattern_42(width, height)
@@ -34,7 +45,7 @@ def generate_maze_dfs(
         row, col = stack[-1]
         valid_neighbors = []
 
-        for bit_pos, dr, dc in directions:
+        for mask, opp_mask, dr, dc in directions:
             nr = row + dr
             nc = col + dc
             if (
@@ -42,17 +53,16 @@ def generate_maze_dfs(
                 and 0 <= nc < width
                 and (nr, nc) not in visited
             ):
-                valid_neighbors.append((bit_pos, nr, nc))
+                valid_neighbors.append((mask, opp_mask, nr, nc))
         if valid_neighbors:
             chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        bit_pos, nr, nc = chosen
-        opposite_bit_pos = (bit_pos + 2) % 4
-        grid[row][col] ^= 1 << bit_pos
-        grid[nr][nc] ^= 1 << opposite_bit_pos
+        mask, opp_mask, nr, nc = chosen
+        grid[row][col] ^= mask
+        grid[nr][nc] ^= opp_mask
 
         stack.append((nr, nc))
         visited.add((nr, nc))
@@ -78,8 +88,19 @@ def generate_maze_dfs_with_steps(
             - list[list[int]]: The final grid.
             - tuple: A tuple of (initial grid copy, list of step diffs).
     """
-    grid = [[15 for _ in range(width)] for _ in range(height)]
-    directions = [(0, -1, 0), (1, 0, 1), (2, 1, 0), (3, 0, -1)]
+    ALL_WALLS = (
+        DirectionMask.NORTH
+        | DirectionMask.EAST
+        | DirectionMask.SOUTH
+        | DirectionMask.WEST
+    )
+    grid = [[ALL_WALLS for _ in range(width)] for _ in range(height)]
+    directions = [
+        (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
+        (DirectionMask.EAST, DirectionMask.WEST, 0, 1),
+        (DirectionMask.SOUTH, DirectionMask.NORTH, 1, 0),
+        (DirectionMask.WEST, DirectionMask.EAST, 0, -1),
+    ]
     stack = [entry]
     visited = {entry}
     blocked_area = get_pattern_42(width, height)
@@ -94,7 +115,7 @@ def generate_maze_dfs_with_steps(
         row, col = stack[-1]
         valid_neighbors = []
 
-        for bit_pos, dr, dc in directions:
+        for mask, opp_mask, dr, dc in directions:
             nr = row + dr
             nc = col + dc
             if (
@@ -102,17 +123,16 @@ def generate_maze_dfs_with_steps(
                 and 0 <= nc < width
                 and (nr, nc) not in visited
             ):
-                valid_neighbors.append((bit_pos, nr, nc))
+                valid_neighbors.append((mask, opp_mask, nr, nc))
         if valid_neighbors:
             chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        bit_pos, nr, nc = chosen
-        opposite_bit_pos = (bit_pos + 2) % 4
-        grid[row][col] ^= 1 << bit_pos
-        grid[nr][nc] ^= 1 << opposite_bit_pos
+        mask, opp_mask, nr, nc = chosen
+        grid[row][col] ^= mask
+        grid[nr][nc] ^= opp_mask
 
         stack.append((nr, nc))
         visited.add((nr, nc))
