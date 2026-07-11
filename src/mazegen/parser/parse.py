@@ -157,7 +157,7 @@ def parse_file(file_name: str) -> tuple[bool, dict[str, str]]:
                 if equal_count != 1:
                     return (False, {})
                 key, value = line.split("=")
-                conf_result[key.strip()] = value.strip()
+                conf_result[key.strip().upper()] = value.strip()
     except OSError:
         return (False, {})
 

@@ -60,14 +60,20 @@ class MazeVisualizer:
             return
 
         self.available = True
+        # Each theme defines colors for walls, landmarks, and the solved path.
         self.cmodes = [
-            [100, 130, 160],
-            [120, 150, 170],
-            [85, 110, 130],
-            [110, 150, 160],
-            [130, 140, 170],
-            [75, 95, 115],
-            [145, 165, 185],
+            ((126, 249, 255), (255, 92, 138), (145, 255, 174)),
+            ((89, 196, 255), (255, 204, 92), (77, 255, 218)),
+            ((255, 167, 92), (255, 80, 120), (255, 231, 128)),
+            ((255, 183, 213), (255, 92, 147), (204, 178, 255)),
+            ((112, 224, 151), (255, 194, 92), (173, 255, 108)),
+            ((0, 240, 255), (255, 45, 190), (247, 255, 0)),
+            ((190, 168, 255), (255, 145, 200), (132, 224, 255)),
+            ((255, 112, 67), (255, 213, 79), (255, 171, 145)),
+            ((185, 230, 255), (110, 168, 255), (225, 255, 255)),
+            ((128, 255, 214), (255, 148, 180), (211, 255, 140)),
+            ((165, 148, 255), (255, 196, 82), (104, 214, 255)),
+            ((224, 230, 238), (255, 105, 105), (112, 224, 178)),
         ]
         self.cm = 0
         self.show_path = False
@@ -136,9 +142,14 @@ class MazeVisualizer:
             ] = row_blank
 
     def _fill_cell(
-        self, x0: int, y0: int, x1: int, y1: int, cmode: int
+        self,
+        x0: int,
+        y0: int,
+        x1: int,
+        y1: int,
+        color: tuple[int, int, int],
     ) -> None:
-        r, g, b = self.cmodes[cmode]
+        r, g, b = color
         start_x = max(0, min(x0, self.width))
         end_x = max(0, min(x1, self.width))
         start_y = max(0, min(y0, self.height))
@@ -158,13 +169,19 @@ class MazeVisualizer:
         self, x0: int, y: int, x1: int, cmode: int
     ) -> None:
         half = self.thickness // 2
-        self._fill_cell(x0, y - half, x1, y - half + self.thickness, cmode)
+        wall_color = self.cmodes[cmode][0]
+        self._fill_cell(
+            x0, y - half, x1, y - half + self.thickness, wall_color
+        )
 
     def _draw_wall_vertical(
         self, x: int, y0: int, y1: int, cmode: int
     ) -> None:
         half = self.thickness // 2
-        self._fill_cell(x - half, y0, x - half + self.thickness, y1, cmode)
+        wall_color = self.cmodes[cmode][0]
+        self._fill_cell(
+            x - half, y0, x - half + self.thickness, y1, wall_color
+        )
 
     def _draw_maze_structure(
         self,
@@ -173,6 +190,7 @@ class MazeVisualizer:
         current_path_cells: set[tuple[int, int]],
     ) -> None:
         self._clear_image()
+        _, landmark_color, path_color = self.cmodes[current_cmode]
 
         for y in range(self.rows):
             for x in range(self.cols):
@@ -188,11 +206,11 @@ class MazeVisualizer:
                     or (y, x) in self.pattern_cells
                 ):
                     self._fill_cell(
-                        x0, y0, x1, y1, (current_cmode + 1) % 7
+                        x0, y0, x1, y1, landmark_color
                     )
                 elif (y, x) in current_path_cells:
                     self._fill_cell(
-                        x0, y0, x1, y1, (current_cmode + 2) % 7
+                        x0, y0, x1, y1, path_color
                     )
 
                 if cell & (1 << Directions.N):
@@ -253,7 +271,7 @@ class MazeVisualizer:
             self._update_solved_path()
         elif keynum == 99:
             if not self.anim_active:
-                self.cm = (self.cm + 1) % 7
+                self.cm = (self.cm + 1) % len(self.cmodes)
                 self._render_maze(self.cm, self.show_path)
         elif keynum == 112:
             if not self.anim_active and not self.path_anim_active:
