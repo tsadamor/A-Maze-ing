@@ -16,7 +16,7 @@ dependencies = [
 [project.scripts]
 a_maze_ing = "a_maze_ing:main"
 
-[tool.hatch.build.targets.wheel]
+[tool.hatch.build.targets.sdist]
 include = [
   "a_maze_ing.py",
   "src/mazegen",
