@@ -48,8 +48,8 @@ Example:
     start_cell_mask = grid[0][0]
 
     # Access the solution path
-    path_directions = generator.solve_maze()  # e.g. "SSEEES..."
-    # e.g. [(0,0), (1,0), ...]
+    path_directions = generator.solve_maze()  # entry.g. "SSEEES..."
+    # entry.g. [(0,0), (1,0), ...]
     path_coordinates = generator.get_solution_path()
 """
 
@@ -64,15 +64,15 @@ from .wall_expand import gen_maze_wall_expand, gen_maze_wall_expand_with_steps
 
 
 def _wall_expand_wrapper(
-    w: int, h: int, e: tuple[int, int]
+    width: int, height: int, entry: tuple[int, int]
 ) -> list[list[int]]:
-    return gen_maze_wall_expand(w, h)
+    return gen_maze_wall_expand(width, height)
 
 
 def _wall_expand_steps_wrapper(
-    w: int, h: int, e: tuple[int, int]
+    width: int, height: int, entry: tuple[int, int]
 ) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
-    return gen_maze_wall_expand_with_steps(w, h)
+    return gen_maze_wall_expand_with_steps(width, height)
 
 
 # Mapping for extensible algorithm registration
@@ -257,10 +257,15 @@ class MazeGenerator:
         """
         if not self.maze:
             self.generate_maze()
-        ent = entry if entry is not None else self.entry
-        ext = exit_coord if exit_coord is not None else self.exit_coord
+        entry_coord = entry if entry is not None else self.entry
+        exit_coord = exit_coord if exit_coord is not None else self.exit_coord
         solver = MazeSolver(
-            self.maze, self.output_file, ent, ext, self.width, self.height
+            self.maze,
+            self.output_file,
+            entry_coord,
+            exit_coord,
+            self.width,
+            self.height
         )
         return solver.solve_maze()
 
@@ -280,14 +285,17 @@ class MazeGenerator:
                 from entry to exit.
         """
         path_str = self.solve_maze(entry, exit_coord)
-        ent = entry if entry is not None else self.entry
-        coords = [ent]
+        entry_coord = entry if entry is not None else self.entry
+        coords = [entry_coord]
         dir_deltas = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
-        curr = ent
+        current_coord = entry_coord
         for d in path_str:
-            dr, dc = dir_deltas[d]
-            curr = (curr[0] + dr, curr[1] + dc)
-            coords.append(curr)
+            delta_row, delta_col = dir_deltas[d]
+            current_coord = (
+                current_coord[0] + delta_row,
+                current_coord[1] + delta_col
+            )
+            coords.append(current_coord)
         return coords
 
     def save_maze_to_file(self) -> None:
@@ -296,14 +304,18 @@ class MazeGenerator:
             return
 
         hex_char = "0123456789ABCDEF"
-        with open(self.output_file, "w", encoding="utf-8") as f:
-            for h in range(self.height):
-                for w in range(self.width):
-                    print(hex_char[self.maze[h][w]], end="", file=f)
-                print(file=f)
+        with open(self.output_file, "w", encoding="utf-8") as file_handle:
+            for row in range(self.height):
+                for col in range(self.width):
+                    print(
+                        hex_char[self.maze[row][col]],
+                        end="",
+                        file=file_handle
+                    )
+                print(file=file_handle)
 
-            f.write("\n")
-            f.write(f"{self.entry[1]},{self.entry[0]}\n")
-            f.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
+            file_handle.write("\n")
+            file_handle.write(f"{self.entry[1]},{self.entry[0]}\n")
+            file_handle.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
             solve_result = self.solve_maze()
-            f.write(f"{solve_result}\n")
+            file_handle.write(f"{solve_result}\n")

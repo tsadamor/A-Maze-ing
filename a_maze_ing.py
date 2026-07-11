@@ -3,7 +3,7 @@
 from src.mazegen.maze_generator.MazeGenerator import MazeGenerator
 from src.mazegen.maze_solver import MazeSolver
 from src.mazegen.parser import parser
-from src.mazegen.visualizer import MazeVisualizer
+from src.mazegen.maze_visualizer import MazeVisualizer
 
 CONF_FILE_NAME = "config.txt"
 

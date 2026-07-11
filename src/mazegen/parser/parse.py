@@ -34,40 +34,40 @@ class MazeConfig(BaseModel):
 
     @field_validator("WIDTH", mode="before")
     @classmethod
-    def parse_width(cls, v: Any) -> int:
+    def parse_width(cls, value: Any) -> int:
         """Validate that width is a positive integer."""
         try:
-            val = int(v)
+            parsed_val = int(value)
         except (ValueError, TypeError):
             raise ValueError("WIDTH must be a positive integer.")
-        if val <= 1:
+        if parsed_val <= 1:
             raise ValueError(
                 "WIDTH must be a positive integer greater than 1."
             )
-        return val
+        return parsed_val
 
     @field_validator("HEIGHT", mode="before")
     @classmethod
-    def parse_height(cls, v: Any) -> int:
+    def parse_height(cls, value: Any) -> int:
         """Validate that height is a positive integer."""
         try:
-            val = int(v)
+            parsed_val = int(value)
         except (ValueError, TypeError):
             raise ValueError("HEIGHT must be a positive integer.")
-        if val <= 1:
+        if parsed_val <= 1:
             raise ValueError(
                 "HEIGHT must be a positive integer greater than 1."
             )
-        return val
+        return parsed_val
 
     @field_validator("ENTRY", "EXIT", mode="before")
     @classmethod
-    def parse_coordinate(cls, v: Any) -> tuple[int, int]:
+    def parse_coordinate(cls, value: Any) -> tuple[int, int]:
         """Convert 'x,y' string into (row, col) i.e. (y, x) integer tuple."""
-        if isinstance(v, tuple) and len(v) == 2:
-            return v
-        if isinstance(v, str):
-            parts = v.split(",")
+        if isinstance(value, tuple) and len(value) == 2:
+            return value
+        if isinstance(value, str):
+            parts = value.split(",")
             if len(parts) == 2:
                 try:
                     return int(parts[1].strip()), int(parts[0].strip())
@@ -80,12 +80,12 @@ class MazeConfig(BaseModel):
 
     @field_validator("PERFECT", mode="before")
     @classmethod
-    def parse_perfect(cls, v: Any) -> bool:
+    def parse_perfect(cls, value: Any) -> bool:
         """Parse boolean value from string representations."""
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            val_lower = v.lower()
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            val_lower = value.lower()
             if val_lower in ("true", "1", "yes"):
                 return True
             elif val_lower in ("false", "0", "no"):
@@ -183,11 +183,14 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
     try:
         config = MazeConfig.model_validate(raw_config)
         return (True, config.model_dump())
-    except ValidationError as e:
+    except ValidationError as error:
         print(ERROR_MSG)
         # Detailed errors to stderr
-        for error in e.errors():
-            loc = ".".join(str(x) for x in error["loc"])
-            msg = error["msg"]
-            print(f"  - Validation Error on '{loc}': {msg}", file=sys.stderr)
+        for err_details in error.errors():
+            location = ".".join(str(x) for x in err_details["loc"])
+            message = err_details["msg"]
+            print(
+                f"  - Validation Error on '{location}': {message}",
+                file=sys.stderr
+            )
         return (False, {})

@@ -45,27 +45,29 @@ def generate_maze_dfs(
         row, col = stack[-1]
         valid_neighbors = []
 
-        for mask, opp_mask, dr, dc in directions:
-            nr = row + dr
-            nc = col + dc
+        for mask, opposite_mask, delta_row, delta_col in directions:
+            next_row = row + delta_row
+            next_col = col + delta_col
             if (
-                0 <= nr < height
-                and 0 <= nc < width
-                and (nr, nc) not in visited
+                0 <= next_row < height
+                and 0 <= next_col < width
+                and (next_row, next_col) not in visited
             ):
-                valid_neighbors.append((mask, opp_mask, nr, nc))
+                valid_neighbors.append(
+                    (mask, opposite_mask, next_row, next_col)
+                )
         if valid_neighbors:
             chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        mask, opp_mask, nr, nc = chosen
+        mask, opposite_mask, next_row, next_col = chosen
         grid[row][col] ^= mask
-        grid[nr][nc] ^= opp_mask
+        grid[next_row][next_col] ^= opposite_mask
 
-        stack.append((nr, nc))
-        visited.add((nr, nc))
+        stack.append((next_row, next_col))
+        visited.add((next_row, next_col))
 
     return grid
 
@@ -115,31 +117,33 @@ def generate_maze_dfs_with_steps(
         row, col = stack[-1]
         valid_neighbors = []
 
-        for mask, opp_mask, dr, dc in directions:
-            nr = row + dr
-            nc = col + dc
+        for mask, opposite_mask, delta_row, delta_col in directions:
+            next_row = row + delta_row
+            next_col = col + delta_col
             if (
-                0 <= nr < height
-                and 0 <= nc < width
-                and (nr, nc) not in visited
+                0 <= next_row < height
+                and 0 <= next_col < width
+                and (next_row, next_col) not in visited
             ):
-                valid_neighbors.append((mask, opp_mask, nr, nc))
+                valid_neighbors.append(
+                    (mask, opposite_mask, next_row, next_col)
+                )
         if valid_neighbors:
             chosen = random.choice(valid_neighbors)
         else:
             stack.pop()
             continue
 
-        mask, opp_mask, nr, nc = chosen
+        mask, opposite_mask, next_row, next_col = chosen
         grid[row][col] ^= mask
-        grid[nr][nc] ^= opp_mask
+        grid[next_row][next_col] ^= opposite_mask
 
-        stack.append((nr, nc))
-        visited.add((nr, nc))
+        stack.append((next_row, next_col))
+        visited.add((next_row, next_col))
 
         diffs.append([
             (row, col, grid[row][col]),
-            (nr, nc, grid[nr][nc]),
+            (next_row, next_col, grid[next_row][next_col]),
         ])
 
     return grid, (initial, diffs)
