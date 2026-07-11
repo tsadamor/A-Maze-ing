@@ -1,6 +1,6 @@
 *This project has been created as part of the 42 curriculum by tsadamor and hfujisad.*
 
-# A-Maze-ing: Maze Generator and Solver
+# A-Maze-ing
 
 ## Description
 **A-Maze-ing** is a Python-based reusable maze generation and solving library and application built as part of the 42 curriculum. The project implements multiple algorithms for generating random mazes, including randomized Depth-First Search (DFS) for perfect academic mazes, a custom Pac-Man style braided maze algorithm, and a Wall Expansion (Wilson's-like) algorithm. It includes an interactive visual rendering interface using the MiniLibX (MLX) library.
@@ -105,9 +105,9 @@ The maze generator is designed as a standalone, modular package called `mazegen`
 
 ### Code Reusability and API:
 The core generation and solving logic is fully decoupled from the GUI visualization:
-- **`MazeGenerator`** ([MazeGenerator.py](file:///home/tsadamor/cursus/A-Maze-ing/src/mazegen/maze_generator/MazeGenerator.py)): Exposes initialization, generation, and output/export capabilities.
-- **`MazeSolver`** ([MazeSolver.py](file:///home/tsadamor/cursus/A-Maze-ing/src/mazegen/maze_solver/MazeSolver.py)): Solves any 2D grid representation using Breadth-First Search (BFS) and outputs coordinates and directional solutions.
-- **`parser`** ([parse.py](file:///home/tsadamor/cursus/A-Maze-ing/src/mazegen/parser/parse.py)): Formats and validates input files.
+- **`MazeGenerator`** `MazeGenerator.py` : Exposes initialization, generation, and output/export capabilities.
+- **`MazeSolver`** `MazeSolver.py` : Solves any 2D grid representation using Breadth-First Search (BFS) and outputs coordinates and directional solutions.
+- **`parser`** `parse.py`: Formats and validates input files.
 
 #### API Example:
 ```python
@@ -137,11 +137,10 @@ print("Solution Path:", path_coords)
 ## Resources
 - **DFS / Backtracking**: [Maze Generation Algorithms on Wikipedia](https://en.wikipedia.org/wiki/Maze_generation_algorithm)
 - **MiniLibX (MLX)**: Python MLX bindings documentation for 42 visualizers.
-- **Wilson's Algorithm**: Loop-erased random walks for dual-spanning tree generation.
 
 ### AI Usage Description:
-Antigravity (an AI coding assistant designed by Google DeepMind) was used to:
-1. Refactor raw implementation scripts to comply with strict PEP 8 (`flake8`) and PEP 257 (`docstrings`) guidelines.
+AI was used to:
+1. Refactor raw implementation scripts to comply with strict PEP8 (`flake8`) and PEP257 (`docstrings`) guidelines.
 2. Introduce comprehensive type annotations and fix duplicate module namespace issues in `mypy`.
 3. Integrate the wall-expansion algorithm as a selectable config-driven option and hook it up to the `MazeGenerator` class.
 4. Correct output formats for coordinates (swapping row/col mapping to match output requirements).
