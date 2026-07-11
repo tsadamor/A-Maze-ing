@@ -135,26 +135,26 @@ print("Solution Path:", path_coords)
 ---
 
 ## Resources
-- **DFS / Backtracking**: [Maze Generation Algorithms on Wikipedia](https://en.wikipedia.org/wiki/Maze_generation_algorithm)
-- **MiniLibX (MLX)**: Python MLX bindings documentation for 42 visualizers.
+- **DFS / Backtracking**: [Maze Generation Algorithms on Wikipedia](https://en.wikipedia.org/wiki/Maze_generation_algorithm), [The Bucksblog](https://www.jamisbuck.org/mazes/)
+- **MiniLibX (MLX)**: [42_MiniLibX_Python_Manual](https://github.com/dde-fite/42_MiniLibX_Python_Manual)
+- **Pydantic**: [Pydantic Docs](https://pydantic.dev/docs/validation/latest/get-started/)
+- **uv**: [uv docs](https://docs.astral.sh/uv/)
 
 ### AI Usage Description:
-AI was used to:
-1. Refactor raw implementation scripts to comply with strict PEP8 (`flake8`) and PEP257 (`docstrings`) guidelines.
-2. Introduce comprehensive type annotations and fix duplicate module namespace issues in `mypy`.
-3. Integrate the wall-expansion algorithm as a selectable config-driven option and hook it up to the `MazeGenerator` class.
-4. Correct output formats for coordinates (swapping row/col mapping to match output requirements).
-
+AI(Gemini, Codex) was used to:
+- Documentation Support
+- Conceputual Learning
+- Refactoring parser, the algorithm for Pac-Man playable maze
 ---
 
 ## Team & Project Management
 
 ### Roles:
-- **tsadamor (Tomoki Sadamori)**:
+- **tsadamor**:
   - Developed the core Depth-First Search (DFS) / Backtracking maze generation algorithm and configured the central "42" pattern layout.
   - Set up Python packaging config (`pyproject.toml`), `.whl` package distribution, and dependency management.
   - Created the project CLI entrypoint (`a_maze_ing.py`), config file parsing verification, and the automation `Makefile`.
-- **hfujisad (Hayuma Fujisada)**:
+- **hfujisad**:
   - Developed the graphical MLX visualizer interface, adding real-time generation animations, solution path visual effects, color theme rotation (`C`), and on-the-fly maze regeneration (`R`).
   - Implemented the Wall Expansion (`wall_expand`) maze generation algorithm.
   - Designed the `MazeSolver` class using Breadth-First Search (BFS) to solve mazes and compute the shortest path.
@@ -165,9 +165,11 @@ AI was used to:
 2. **Phase 2**: Designing the MLX graphical visualizer and integrating solver/generator animation flows.
 3. **Phase 3**: Strict code style compliance and type correctness adjustments using `flake8` and `mypy`.
 4. **Phase 4**: Project packaging, build automation via `Makefile`, and performance optimization of rendering routines.
+5. **Phase 5**: Implementation of the new requirements, such as Pac-Man playable, License.md, etc...
 
 ### Lessons Learned:
 - **What worked well**: Separating the parser, solver, generator, and visualizer modules allowed for seamless parallel development and clean integration.
+- **Changes from the original plan**: Since the 42 side changed the subject without notice after the initial registration, the new requirements came as a complete surprise.
 - **Improvements**: Optimizing visualizer frame-update throughput greatly improved responsiveness. Future iterations could benefit from adding more solving algorithms (such as A* or Dijkstra's).
 
 ### Tools Used:
