@@ -96,7 +96,7 @@ The project supports three distinct maze generation algorithms to fulfill the re
 ### 3. Wall Expansion (`wall_expand`)
 - **Type**: Perfect/Dual-Spanning Tree Maze generator.
 - **Behavior**: Grows wall segments from the outer boundaries inward using a random loop-erased wall expansion algorithm. It prevents loops and isolates blocks of the maze, forming a perfect maze structure.
-- **Why chosen**: Demonstrates an alternative paradigm of growing walls instead of carving paths, satisfying the requirement to support multiple algorithms.
+- **Why chosen**: It was a contrasting algorithm because, unlike DFS—which generates a grid surrounded by walls and then creates a maze by destroying those walls—.
 
 ---
 
