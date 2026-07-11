@@ -184,13 +184,24 @@ def parser(file_name: str) -> tuple[bool, dict[str, Any]]:
         config = MazeConfig.model_validate(raw_config)
         return (True, config.model_dump())
     except ValidationError as error:
-        print(ERROR_MSG)
-        # Detailed errors to stderr
+        missing_fields = []
+        other_errors = []
         for err_details in error.errors():
             location = ".".join(str(x) for x in err_details["loc"])
-            message = err_details["msg"]
+            if err_details["type"] == "missing":
+                missing_fields.append(location)
+            else:
+                other_errors.append((location, err_details["msg"]))
+
+        if missing_fields:
+            joined = ', '.join(missing_fields)
+            print(f"Aborted: Missing configuration fields: {joined}")
+        elif other_errors:
+            print(ERROR_MSG)
+
+        for loc, msg in other_errors:
             print(
-                f"  - Validation Error on '{location}': {message}",
+                f"  - Validation Error on '{loc}': {msg}",
                 file=sys.stderr
             )
         return (False, {})
