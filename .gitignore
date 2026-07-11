@@ -2,6 +2,7 @@ venv
 .venv
 __pycache__
 .mypy_cache
-*.whl
 maze.txt
 dist/
+tests/
+.pytest_cache/

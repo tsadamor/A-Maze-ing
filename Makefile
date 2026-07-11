@@ -9,7 +9,7 @@ LOCAL_LIBS	= lib/mlx-2.2-py3-none-any.whl
 
 FLAKE8           = $(VENV_BIN)/flake8
 MYPY            = $(VENV_BIN)/mypy
-MYPY_FLAGS      = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+MYPY_FLAGS      = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --explicit-package-bases
 
 SRCS            =  a_maze_ing.py $(shell find src/mazegen -name '*.py')
 export UV_LINK_MODE=copy
