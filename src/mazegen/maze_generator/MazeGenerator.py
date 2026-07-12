@@ -60,24 +60,12 @@ from .braided import generate_maze_pacman, generate_maze_pacman_with_steps
 from .wall_expand import gen_maze_wall_expand, gen_maze_wall_expand_with_steps
 
 
-def _wall_expand_wrapper(
-    width: int, height: int, entry: tuple[int, int]
-) -> list[list[int]]:
-    return gen_maze_wall_expand(width, height)
-
-
-def _wall_expand_steps_wrapper(
-    width: int, height: int, entry: tuple[int, int]
-) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
-    return gen_maze_wall_expand_with_steps(width, height)
-
-
 # Mapping for extensible algorithm registration
 _ALGORITHMS: dict[
     str, Callable[[int, int, tuple[int, int]], list[list[int]]]
 ] = {
     "dfs": generate_maze_dfs,
-    "wall_expand": _wall_expand_wrapper,
+    "wall_expand": gen_maze_wall_expand,
     "pacman": generate_maze_pacman,
 }
 
@@ -89,7 +77,7 @@ _ALGORITHMS_WITH_STEPS: dict[
     ],
 ] = {
     "dfs": generate_maze_dfs_with_steps,
-    "wall_expand": _wall_expand_steps_wrapper,
+    "wall_expand": gen_maze_wall_expand_with_steps,
     "pacman": generate_maze_pacman_with_steps,
 }
 

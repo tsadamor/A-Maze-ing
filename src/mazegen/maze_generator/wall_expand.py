@@ -6,7 +6,7 @@ from typing import Any
 from src.mazegen.utils import get_pattern_42, DirectionMask as Direction
 
 
-def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
+def gen_maze_wall_expand(width: int, height: int, entry: tuple[int, int]) -> list[list[int]]:
     """Generate maze using wall expansion method.
 
     Args:
@@ -113,6 +113,7 @@ def gen_maze_wall_expand(width: int, height: int) -> list[list[int]]:
 def gen_maze_wall_expand_with_steps(
     width: int,
     height: int,
+    entry: tuple[int, int],
 ) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
     """Generate maze using wall expansion method with step history.
 
