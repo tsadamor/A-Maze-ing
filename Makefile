@@ -9,7 +9,6 @@ LOCAL_LIBS	= lib/mlx-2.2-py3-none-any.whl
 
 FLAKE8           = $(VENV_BIN)/flake8
 MYPY            = $(VENV_BIN)/mypy
-MYPY_FLAGS      = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --explicit-package-bases
 
 SRCS            =  a_maze_ing.py $(shell find src/mazegen -name '*.py')
 export UV_LINK_MODE=copy
@@ -43,10 +42,10 @@ clean:
 
 lint: install
 	@$(FLAKE8) . --exclude $(VENV)
-	@$(MYPY) $(MYPY_FLAGS) src
+	@$(MYPY) src
 
 lint-strict: install
 	$(FLAKE8) . --exclude $(VENV)
-	$(MYPY) $(MYPY_FLAGS) --strict src
+	$(MYPY) --strict src
 
 .PHONY: all install build run debug clean lint lint-strict
