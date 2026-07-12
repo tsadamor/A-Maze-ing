@@ -89,10 +89,7 @@ class MazeGenerator:
     DFS or Wilson's Wall Expansion) or multi-route playable boards containing
     loops.
 
-    To instantiate, you can either provide:
-      - A dictionary matching the configuration file format (all uppercase
-        keys).
-      - Direct keyword arguments.
+    To instantiate, provide the explicit maze parameters (width, height, entry, exit, etc.).
 
     Attributes:
         width (int): Maze width in cells (number of columns).
@@ -114,20 +111,17 @@ class MazeGenerator:
 
     def __init__(
         self,
-        config: dict[str, Any] | None = None,
-        *,
-        width: int = 20,
-        height: int = 15,
-        entry: tuple[int, int] = (0, 0),
-        exit_coord: tuple[int, int] = (14, 19),
+        width: int,
+        height: int,
+        entry: tuple[int, int],
+        exit_coord: tuple[int, int],
         perfect: bool = True,
         seed: int | None = None,
         algorithm: str | None = None,
     ) -> None:
-        """Initialize MazeGenerator with config dictionary or params.
+        """Initialize MazeGenerator with explicit parameters.
 
         Args:
-            config (dict[str, Any] | None): Optional configuration dictionary.
             width (int): Maze width in cells.
             height (int): Maze height in cells.
             entry (tuple[int, int]): Entry coordinate as (row, col).
@@ -137,22 +131,13 @@ class MazeGenerator:
             algorithm (str | None): Specific algorithm
                 ('dfs', 'pacman', 'wall_expand').
         """
-        if config is not None:
-            self.width: int = config["WIDTH"]
-            self.height: int = config["HEIGHT"]
-            self.entry: tuple[int, int] = config["ENTRY"]
-            self.exit_coord: tuple[int, int] = config["EXIT"]
-            self.perfect: bool = config["PERFECT"]
-            self.seed: int | None = config.get("SEED")
-            self.algorithm: str | None = config.get("ALGORITHM")
-        else:
-            self.width = width
-            self.height = height
-            self.entry = entry
-            self.exit_coord = exit_coord
-            self.perfect = perfect
-            self.seed = seed
-            self.algorithm = algorithm
+        self.width = width
+        self.height = height
+        self.entry = entry
+        self.exit_coord = exit_coord
+        self.perfect = perfect
+        self.seed = seed
+        self.algorithm = algorithm
 
         self.maze: list[list[int]] = []
 

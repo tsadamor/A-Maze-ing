@@ -21,7 +21,15 @@ def main() -> None:
     wid = config["WIDTH"]
     hig = config["HEIGHT"]
 
-    generator = MazeGenerator(config)
+    generator = MazeGenerator(
+        width=wid,
+        height=hig,
+        entry=ent,
+        exit_coord=ext,
+        perfect=config["PERFECT"],
+        seed=config.get("SEED"),
+        algorithm=config.get("ALGORITHM")
+    )
     maze, steps = generator.generate_maze_steps()
 
     solver = MazeSolver(maze, config["OUTPUT_FILE"], ent, ext, wid, hig)

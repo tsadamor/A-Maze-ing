@@ -252,7 +252,15 @@ class MazeVisualizer:
         if keynum == 65307:
             self._cleanup()
         elif keynum == 114:
-            gen = MazeGenerator(self.config)
+            gen = MazeGenerator(
+                width=self.config["WIDTH"],
+                height=self.config["HEIGHT"],
+                entry=self.config["ENTRY"],
+                exit_coord=self.config["EXIT"],
+                perfect=self.config["PERFECT"],
+                seed=self.config.get("SEED"),
+                algorithm=self.config.get("ALGORITHM")
+            )
             new_maze, new_steps = gen.generate_maze_steps()
             self.maze = new_maze
             self.anim_initial, self.anim_diffs = new_steps
