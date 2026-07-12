@@ -2,8 +2,8 @@
 
 from mazegen.maze_generator.MazeGenerator import MazeGenerator
 from mazegen.maze_solver import MazeSolver
-from mazegen.parser import parser
 from mazegen.maze_visualizer import MazeVisualizer
+from mazegen.parser import parser
 from mazegen.utils import save_maze_to_file
 
 CONF_FILE_NAME = "config.txt"
