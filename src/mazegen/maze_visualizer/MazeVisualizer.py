@@ -6,6 +6,7 @@ from src.mazegen.utils import (
     DIR_MAZE,
     Directions,
     get_pattern_42,
+    save_maze_to_file,
 )
 from src.mazegen.maze_solver import MazeSolver
 
@@ -254,7 +255,6 @@ class MazeVisualizer:
             gen = MazeGenerator(self.config)
             new_maze, new_steps = gen.generate_maze_steps()
             self.maze = new_maze
-            gen.save_maze_to_file()
             self.anim_initial, self.anim_diffs = new_steps
             if self.anim_initial:
                 self.anim_maze = [row[:] for row in self.anim_initial]
@@ -267,6 +267,16 @@ class MazeVisualizer:
                 self.config["EXIT"],
                 self.config["WIDTH"],
                 self.config["HEIGHT"],
+            )
+            path_str = self.solver.solve_maze()
+            save_maze_to_file(
+                self.maze,
+                self.config["OUTPUT_FILE"],
+                self.config["WIDTH"],
+                self.config["HEIGHT"],
+                self.config["ENTRY"],
+                self.config["EXIT"],
+                path_str
             )
             self._update_solved_path()
         elif keynum == 99:

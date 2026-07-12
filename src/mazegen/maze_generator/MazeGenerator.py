@@ -47,17 +47,14 @@ Example:
     # Access the generated grid cell (row 0, col 0)
     start_cell_mask = grid[0][0]
 
-    # Access the solution path
-    path_directions = generator.solve_maze()  # entry.g. "SSEEES..."
-    # entry.g. [(0,0), (1,0), ...]
-    path_coordinates = generator.get_solution_path()
+    # Access the solution (Now requires MazeSolver separately)
+    # ...
 """
 
 import random
 import sys
 from typing import Any, Callable
 
-from src.mazegen.maze_solver import MazeSolver
 from .backtracking import generate_maze_dfs, generate_maze_dfs_with_steps
 from .braided import generate_maze_pacman, generate_maze_pacman_with_steps
 from .wall_expand import gen_maze_wall_expand, gen_maze_wall_expand_with_steps
@@ -114,7 +111,6 @@ class MazeGenerator:
         height (int): Maze height in cells (number of rows).
         entry (tuple[int, int]): Entry coordinate as (row, col).
         exit_coord (tuple[int, int]): Exit coordinate as (row, col).
-        output_file (str): Output file path to save the generated maze.
         perfect (bool): True to generate a perfect maze (no loops, single
             path), False to generate a braided playable maze.
         seed (int | None): Optional random seed for deterministic generation.
@@ -136,7 +132,6 @@ class MazeGenerator:
         height: int = 15,
         entry: tuple[int, int] = (0, 0),
         exit_coord: tuple[int, int] = (14, 19),
-        output_file: str = "maze.txt",
         perfect: bool = True,
         seed: int | None = None,
         algorithm: str | None = None,
@@ -149,7 +144,6 @@ class MazeGenerator:
             height (int): Maze height in cells.
             entry (tuple[int, int]): Entry coordinate as (row, col).
             exit_coord (tuple[int, int]): Exit coordinate as (row, col).
-            output_file (str): Output file path.
             perfect (bool): Whether to generate a perfect maze.
             seed (int | None): Optional random seed for reproducibility.
             algorithm (str | None): Specific algorithm
@@ -160,7 +154,6 @@ class MazeGenerator:
             self.height: int = config["HEIGHT"]
             self.entry: tuple[int, int] = config["ENTRY"]
             self.exit_coord: tuple[int, int] = config["EXIT"]
-            self.output_file: str = config["OUTPUT_FILE"]
             self.perfect: bool = config["PERFECT"]
             self.seed: int | None = config.get("SEED")
             self.algorithm: str | None = config.get("ALGORITHM")
@@ -169,7 +162,6 @@ class MazeGenerator:
             self.height = height
             self.entry = entry
             self.exit_coord = exit_coord
-            self.output_file = output_file
             self.perfect = perfect
             self.seed = seed
             self.algorithm = algorithm
@@ -239,83 +231,3 @@ class MazeGenerator:
             self.generate_maze()
         return self.maze
 
-    def solve_maze(
-        self,
-        entry: tuple[int, int] | None = None,
-        exit_coord: tuple[int, int] | None = None,
-    ) -> str:
-        """Solve maze and return directional path string ('N', 'E', 'S', 'W').
-
-        Args:
-            entry (tuple[int, int] | None): Optional start coordinate
-                (defaults to configured entry).
-            exit_coord (tuple[int, int] | None): Optional end coordinate
-                (defaults to configured exit).
-
-        Returns:
-            str: String of directions representing shortest path.
-        """
-        if not self.maze:
-            self.generate_maze()
-        entry_coord = entry if entry is not None else self.entry
-        exit_coord = exit_coord if exit_coord is not None else self.exit_coord
-        solver = MazeSolver(
-            self.maze,
-            self.output_file,
-            entry_coord,
-            exit_coord,
-            self.width,
-            self.height
-        )
-        return solver.solve_maze()
-
-    def get_solution_path(
-        self,
-        entry: tuple[int, int] | None = None,
-        exit_coord: tuple[int, int] | None = None,
-    ) -> list[tuple[int, int]]:
-        """Solve maze and return (row, col) path coordinates.
-
-        Args:
-            entry (tuple[int, int] | None): Optional start coordinate.
-            exit_coord (tuple[int, int] | None): Optional end coordinate.
-
-        Returns:
-            list[tuple[int, int]]: List of (row, col) coordinates
-                from entry to exit.
-        """
-        path_str = self.solve_maze(entry, exit_coord)
-        entry_coord = entry if entry is not None else self.entry
-        coords = [entry_coord]
-        dir_deltas = {"N": (-1, 0), "E": (0, 1), "S": (1, 0), "W": (0, -1)}
-        current_coord = entry_coord
-        for d in path_str:
-            delta_row, delta_col = dir_deltas[d]
-            current_coord = (
-                current_coord[0] + delta_row,
-                current_coord[1] + delta_col
-            )
-            coords.append(current_coord)
-        return coords
-
-    def save_maze_to_file(self) -> None:
-        """Save maze hex grid, entry/exit, and solved path to file."""
-        if not self.maze:
-            return
-
-        hex_char = "0123456789ABCDEF"
-        with open(self.output_file, "w", encoding="utf-8") as file_handle:
-            for row in range(self.height):
-                for col in range(self.width):
-                    print(
-                        hex_char[self.maze[row][col]],
-                        end="",
-                        file=file_handle
-                    )
-                print(file=file_handle)
-
-            file_handle.write("\n")
-            file_handle.write(f"{self.entry[1]},{self.entry[0]}\n")
-            file_handle.write(f"{self.exit_coord[1]},{self.exit_coord[0]}\n")
-            solve_result = self.solve_maze()
-            file_handle.write(f"{solve_result}\n")
