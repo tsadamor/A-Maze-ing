@@ -53,12 +53,11 @@ Example:
 
 import random
 import sys
-from typing import Any, Callable
+from typing import Callable
 
-from .backtracking import generate_maze_dfs, generate_maze_dfs_with_steps
-from .braided import generate_maze_pacman, generate_maze_pacman_with_steps
-from .wall_expand import gen_maze_wall_expand, gen_maze_wall_expand_with_steps
-
+from .backtracking import generate_maze_dfs
+from .braided import generate_maze_pacman
+from .wall_expand import gen_maze_wall_expand
 
 # Mapping for extensible algorithm registration
 _ALGORITHMS: dict[
@@ -67,18 +66,6 @@ _ALGORITHMS: dict[
     "dfs": generate_maze_dfs,
     "wall_expand": gen_maze_wall_expand,
     "pacman": generate_maze_pacman,
-}
-
-_ALGORITHMS_WITH_STEPS: dict[
-    str,
-    Callable[
-        [int, int, tuple[int, int]],
-        tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]],
-    ],
-] = {
-    "dfs": generate_maze_dfs_with_steps,
-    "wall_expand": gen_maze_wall_expand_with_steps,
-    "pacman": generate_maze_pacman_with_steps,
 }
 
 
@@ -167,32 +154,6 @@ class MazeGenerator:
         generator = _ALGORITHMS.get(algo, generate_maze_pacman)
         self.maze = generator(self.width, self.height, self.entry)
         return self.maze
-
-    def generate_maze_steps(
-        self,
-    ) -> tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]:
-        """Generate maze and return step history for visual animation.
-
-        Returns:
-            tuple[list[list[int]],
-            tuple[list[list[int]], list[list[Any]]]]: A tuple containing:
-                - list[list[int]]: The final grid.
-                - tuple: A tuple of (initial grid copy, list of step diffs).
-        """
-        self._check_pattern_42_size()
-        if self.seed is not None:
-            random.seed(self.seed)
-
-        algo = (
-            self.algorithm.lower()
-            if self.algorithm
-            else ("dfs" if self.perfect else "pacman")
-        )
-        generator = _ALGORITHMS_WITH_STEPS.get(
-            algo, generate_maze_pacman_with_steps
-        )
-        self.maze, steps = generator(self.width, self.height, self.entry)
-        return self.maze, steps
 
     def get_maze(self) -> list[list[int]]:
         """Access generated maze structure, generating if needed.

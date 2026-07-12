@@ -30,7 +30,7 @@ def main() -> None:
         seed=config.get("SEED"),
         algorithm=config.get("ALGORITHM")
     )
-    maze, steps = generator.generate_maze_steps()
+    maze, steps = generator.generate_maze()
 
     solver = MazeSolver(maze, config["OUTPUT_FILE"], ent, ext, wid, hig)
     path_str = solver.solve_maze()
