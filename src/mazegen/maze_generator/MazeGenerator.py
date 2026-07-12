@@ -53,7 +53,7 @@ Example:
 
 import random
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 from .backtracking import generate_maze_dfs
 from .braided import generate_maze_pacman
@@ -151,8 +151,7 @@ class MazeGenerator:
         if self.seed is not None:
             random.seed(self.seed)
 
-        algo = _ALGORITHM_NAMES[random.randint(0, len(_ALGORITHMS) - 1)]
-        print(algo)
+        algo = _ALGORITHM_NAMES[random.randint(0, 1)]
         if not self.perfect:
             algo = "pacman"
         generator = _ALGORITHMS.get(algo, generate_maze_pacman)

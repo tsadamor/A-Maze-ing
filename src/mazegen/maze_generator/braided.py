@@ -1,12 +1,22 @@
 """Braided (Pac-Man style non-perfect) maze generation algorithm."""
 
 import random
+from collections.abc import Callable
 from typing import Any
 
 from mazegen.utils import DirectionMask, get_pattern_42
 
 from .backtracking import generate_maze_dfs
+from .wall_expand import gen_maze_wall_expand
 
+_ALGORITHMS: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+    "dfs": generate_maze_dfs,
+    "wall_expand": gen_maze_wall_expand,
+}
+_ALGORITHM_NAMES: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+    0: "dfs",
+    1: "wall_expand",
+}
 
 def _count_open_walls(mask: int) -> int:
     """Count number of open walls (0 bits) in a cell mask.
@@ -44,7 +54,9 @@ def generate_maze_pacman(
             - list[list[int]]: The final grid.
             - tuple: A tuple of (initial grid copy, list of step diffs).
     """
-    grid, (initial, diffs) = generate_maze_dfs(width, height, entry)
+    algo_name = _ALGORITHM_NAMES[random.randint(0, len(_ALGORITHM_NAMES) - 1)]
+    algo = _ALGORITHMS.get(algo_name, generate_maze_dfs)
+    grid, (initial, diffs) = algo(width, height, entry)
     blocked_area = get_pattern_42(width, height)
     directions = [
         (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
