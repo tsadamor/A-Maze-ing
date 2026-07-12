@@ -1,14 +1,14 @@
 """Maze visualizer module using MLX."""
 
 from typing import Any
-from src.mazegen.maze_generator.MazeGenerator import MazeGenerator
-from src.mazegen.utils import (
+from mazegen.maze_generator.MazeGenerator import MazeGenerator
+from mazegen.utils import (
     DIR_MAZE,
     Directions,
     get_pattern_42,
     save_maze_to_file,
 )
-from src.mazegen.maze_solver import MazeSolver
+from mazegen.maze_solver import MazeSolver
 
 
 class MazeVisualizer:

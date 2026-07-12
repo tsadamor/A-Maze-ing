@@ -20,7 +20,7 @@ to the adjacent cell. Otherwise, the passage is blocked.
 
 Usage Example:
 --------------
-    from src.mazegen.maze_solver import MazeSolver
+    from mazegen.maze_solver import MazeSolver
 
     # 1. Provide a 2x2 maze grid:
     # Row 0: cell 0 (N, W closed -> 9), cell 1 (N, E closed -> 3)
@@ -53,7 +53,7 @@ Usage Example:
 """
 
 from collections import deque
-from src.mazegen.utils import DIR_MAZE, DIR_NAMES
+from mazegen.utils import DIR_MAZE, DIR_NAMES
 
 
 class MazeSolver:

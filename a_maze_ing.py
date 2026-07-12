@@ -1,10 +1,10 @@
 """Main entrypoint for A-Maze-ing project."""
 
-from src.mazegen.maze_generator.MazeGenerator import MazeGenerator
-from src.mazegen.maze_solver import MazeSolver
-from src.mazegen.parser import parser
-from src.mazegen.maze_visualizer import MazeVisualizer
-from src.mazegen.utils import save_maze_to_file
+from mazegen.maze_generator.MazeGenerator import MazeGenerator
+from mazegen.maze_solver import MazeSolver
+from mazegen.parser import parser
+from mazegen.maze_visualizer import MazeVisualizer
+from mazegen.utils import save_maze_to_file
 
 CONF_FILE_NAME = "config.txt"
 

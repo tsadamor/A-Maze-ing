@@ -28,7 +28,7 @@ How to use:
 
 Example:
 --------
-    from src.mazegen.maze_generator import MazeGenerator
+    from mazegen.maze_generator import MazeGenerator
 
     # Create a 20x15 perfect maze with a seed
     generator = MazeGenerator(

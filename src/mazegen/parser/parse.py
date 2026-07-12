@@ -12,7 +12,7 @@ from pydantic import (
     field_validator,
 )
 
-from src.mazegen.utils import get_pattern_42
+from mazegen.utils import get_pattern_42
 
 ERROR_MSG = "Aborted: Bad Configuration File"
 

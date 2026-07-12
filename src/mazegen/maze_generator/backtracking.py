@@ -3,7 +3,7 @@
 import random
 from typing import Any
 
-from src.mazegen.utils import get_pattern_42, DirectionMask
+from mazegen.utils import get_pattern_42, DirectionMask
 
 
 def generate_maze_dfs(
