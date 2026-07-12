@@ -1,14 +1,15 @@
 """Maze visualizer module using MLX."""
 
 from typing import Any
+
 from mazegen.maze_generator.MazeGenerator import MazeGenerator
+from mazegen.maze_solver import MazeSolver
 from mazegen.utils import (
     DIR_MAZE,
     Directions,
     get_pattern_42,
     save_maze_to_file,
 )
-from mazegen.maze_solver import MazeSolver
 
 
 class MazeVisualizer:
@@ -261,7 +262,7 @@ class MazeVisualizer:
                 seed=self.config.get("SEED"),
                 algorithm=self.config.get("ALGORITHM")
             )
-            new_maze, new_steps = gen.generate_maze_steps()
+            new_maze, new_steps = gen.generate_maze()
             self.maze = new_maze
             self.anim_initial, self.anim_diffs = new_steps
             if self.anim_initial:

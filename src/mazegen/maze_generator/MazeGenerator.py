@@ -67,6 +67,11 @@ _ALGORITHMS: dict[
     "wall_expand": gen_maze_wall_expand,
     "pacman": generate_maze_pacman,
 }
+_ALGORITHM_NAMES: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+    0: "dfs",
+    1: "wall_expand",
+    2: "pacman",
+}
 
 
 class MazeGenerator:
@@ -146,11 +151,10 @@ class MazeGenerator:
         if self.seed is not None:
             random.seed(self.seed)
 
-        algo = (
-            self.algorithm.lower()
-            if self.algorithm
-            else ("dfs" if self.perfect else "pacman")
-        )
+        algo = _ALGORITHM_NAMES[random.randint(0, len(_ALGORITHMS) - 1)]
+        print(algo)
+        if not self.perfect:
+            algo = "pacman"
         generator = _ALGORITHMS.get(algo, generate_maze_pacman)
         self.maze = generator(self.width, self.height, self.entry)
         return self.maze
