@@ -36,7 +36,6 @@ class MazeVisualizer:
 
         try:
             from mlx import Mlx
-            from pyautogui import size
         except Exception:
             print(
                 "Graphical visualization is not available (MLX/PyAutoGUI "
@@ -46,9 +45,6 @@ class MazeVisualizer:
             return
 
         try:
-            width, height = size()
-            self.height = height - 100
-            self.width = width - 400
             self.m = Mlx()
             self.p = self.m.mlx_init()
             if self.p is None:
@@ -80,6 +76,9 @@ class MazeVisualizer:
         self.cm = 0
         self.show_path = False
 
+        _, width, height = self.m.mlx_get_screen_size(self.p)
+        self.height = height - 100
+        self.width = width - 400
         self.win = self.m.mlx_new_window(
             self.p, self.width, self.height, "Maze Viewer"
         )
