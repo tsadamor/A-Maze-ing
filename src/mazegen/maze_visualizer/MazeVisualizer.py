@@ -60,18 +60,18 @@ class MazeVisualizer:
         self.available = True
         # Each theme defines colors for walls, landmarks, and the solved path.
         self.cmodes = [
-            ((126, 249, 255), (255, 92, 138), (145, 255, 174)),
-            ((89, 196, 255), (255, 204, 92), (77, 255, 218)),
-            ((255, 167, 92), (255, 80, 120), (255, 231, 128)),
-            ((255, 183, 213), (255, 92, 147), (204, 178, 255)),
-            ((112, 224, 151), (255, 194, 92), (173, 255, 108)),
-            ((0, 240, 255), (255, 45, 190), (247, 255, 0)),
-            ((190, 168, 255), (255, 145, 200), (132, 224, 255)),
-            ((255, 112, 67), (255, 213, 79), (255, 171, 145)),
-            ((185, 230, 255), (110, 168, 255), (225, 255, 255)),
-            ((128, 255, 214), (255, 148, 180), (211, 255, 140)),
-            ((165, 148, 255), (255, 196, 82), (104, 214, 255)),
-            ((224, 230, 238), (255, 105, 105), (112, 224, 178)),
+            ((126, 249, 255), (255, 92, 138), (145, 255, 174)),  # Cyan & Pink theme
+            ((89, 196, 255), (255, 204, 92), (77, 255, 218)),    # Sky blue & Yellow theme
+            ((255, 167, 92), (255, 80, 120), (255, 231, 128)),   # Orange & Pink theme
+            ((255, 183, 213), (255, 92, 147), (204, 178, 255)),  # Pink & Lavender theme
+            ((112, 224, 151), (255, 194, 92), (173, 255, 108)),  # Green & Orange theme
+            ((0, 240, 255), (255, 45, 190), (247, 255, 0)),      # Neon theme
+            ((190, 168, 255), (255, 145, 200), (132, 224, 255)), # Purple & Pink theme
+            ((255, 112, 67), (255, 213, 79), (255, 171, 145)),   # Coral & Yellow theme
+            ((185, 230, 255), (110, 168, 255), (225, 255, 255)), # Winter blue theme
+            ((128, 255, 214), (255, 148, 180), (211, 255, 140)), # Aqua & Lime theme
+            ((165, 148, 255), (255, 196, 82), (104, 214, 255)),  # Violet & Gold theme
+            ((224, 230, 238), (255, 105, 105), (112, 224, 178)), # Grey & Red theme
         ]
         self.cm = 0
         self.show_path = False
@@ -125,6 +125,11 @@ class MazeVisualizer:
         self._update_solved_path()
 
     def _update_solved_path(self) -> None:
+        """Update the set of path cells from the solved path string.
+
+        Returns:
+            None
+        """
         self.solved_path_cells.clear()
         path = self.solver.solve_maze()
         cy, cx = self.config["ENTRY"]
@@ -135,6 +140,11 @@ class MazeVisualizer:
             self.solved_path_cells.add((cy, cx))
 
     def _clear_image(self) -> None:
+        """Clear the entire image buffer with a black background.
+
+        Returns:
+            None
+        """
         row_blank = b"\x00\x00\x00\xff" * self.width
         for y in range(self.height):
             idx = y * self.line_size
@@ -150,6 +160,18 @@ class MazeVisualizer:
         y1: int,
         color: tuple[int, int, int],
     ) -> None:
+        """Draw a filled rectangle into the image buffer.
+
+        Args:
+            x0 (int): Start X coordinate.
+            y0 (int): Start Y coordinate.
+            x1 (int): End X coordinate.
+            y1 (int): End Y coordinate.
+            color (tuple[int, int, int]): RGB color tuple to fill with.
+
+        Returns:
+            None
+        """
         r, g, b = color
         start_x = max(0, min(x0, self.width))
         end_x = max(0, min(x1, self.width))
@@ -169,6 +191,17 @@ class MazeVisualizer:
     def _draw_wall_horizontal(
         self, x0: int, y: int, x1: int, cmode: int
     ) -> None:
+        """Draw a horizontal wall centered at the specified Y coordinate.
+
+        Args:
+            x0 (int): Start X coordinate.
+            y (int): Y coordinate (center of the wall).
+            x1 (int): End X coordinate.
+            cmode (int): Color mode index.
+
+        Returns:
+            None
+        """
         half = self.thickness // 2
         wall_color = self.cmodes[cmode][0]
         self._fill_cell(
@@ -178,6 +211,17 @@ class MazeVisualizer:
     def _draw_wall_vertical(
         self, x: int, y0: int, y1: int, cmode: int
     ) -> None:
+        """Draw a vertical wall centered at the specified X coordinate.
+
+        Args:
+            x (int): X coordinate (center of the wall).
+            y0 (int): Start Y coordinate.
+            y1 (int): End Y coordinate.
+            cmode (int): Color mode index.
+
+        Returns:
+            None
+        """
         half = self.thickness // 2
         wall_color = self.cmodes[cmode][0]
         self._fill_cell(
@@ -190,6 +234,16 @@ class MazeVisualizer:
         current_cmode: int,
         current_path_cells: set[tuple[int, int]],
     ) -> None:
+        """Core rendering logic to draw the maze grid, walls, and paths.
+
+        Args:
+            target_maze (list[list[int]]): Maze grid to render.
+            current_cmode (int): Color mode index.
+            current_path_cells (set[tuple[int, int]]): Path cells to highlight.
+
+        Returns:
+            None
+        """
         self._clear_image()
         _, landmark_color, path_color = self.cmodes[current_cmode]
 
@@ -235,6 +289,17 @@ class MazeVisualizer:
         show_path: bool,
         partial_path: list[tuple[int, int]] | None = None,
     ) -> None:
+        """Determine path visibility and trigger maze rendering.
+
+        Args:
+            cmode (int): Color mode index.
+            show_path (bool): True to show the full solved path.
+            partial_path (list[tuple[int, int]] | None): Optional list of path
+                coordinates for animation frames.
+
+        Returns:
+            None
+        """
         path_cells = set()
         if partial_path is not None:
             path_cells = set(partial_path)
@@ -244,14 +309,28 @@ class MazeVisualizer:
         self._draw_maze_structure(self.maze, cmode, path_cells)
 
     def _cleanup(self) -> None:
+        """Free MLX resources and exit the application.
+
+        Returns:
+            None
+        """
         self.m.mlx_destroy_image(self.p, self.img)
         self.m.mlx_destroy_window(self.p, self.win)
         self.m.mlx_loop_exit(self.p)
 
     def _on_key(self, keynum: int, param: Any) -> None:
-        if keynum == 65307:
+        """Handle keyboard events during the MLX event loop.
+
+        Args:
+            keynum (int): The key code pressed.
+            param (Any): Unused MLX parameter.
+
+        Returns:
+            None
+        """
+        if keynum == 65307:  # Esc key: Exit application
             self._cleanup()
-        elif keynum == 114:
+        elif keynum == 114:  # 'r' key: Regenerate maze
             gen = MazeGenerator(
                 width=self.config["WIDTH"],
                 height=self.config["HEIGHT"],
@@ -287,11 +366,11 @@ class MazeVisualizer:
                 path_str
             )
             self._update_solved_path()
-        elif keynum == 99:
+        elif keynum == 99:  # 'c' key: Change color theme
             if not self.anim_active:
                 self.cm = (self.cm + 1) % len(self.cmodes)
                 self._render_maze(self.cm, self.show_path)
-        elif keynum == 112:
+        elif keynum == 112:  # 'p' key: Toggle path visibility/animation
             if not self.anim_active and not self.path_anim_active:
                 if self.show_path:
                     self.show_path = False
@@ -312,6 +391,14 @@ class MazeVisualizer:
                     self.path_anim_active = True
 
     def _on_loop(self, param: Any) -> None:
+        """Main event loop hook for handling frame-by-frame animations.
+
+        Args:
+            param (Any): Unused MLX parameter.
+
+        Returns:
+            None
+        """
         if self.anim_active and self.anim_maze:
             for _ in range(self.steps_per_frame):
                 if self.anim_frame >= len(self.anim_diffs):
@@ -340,6 +427,14 @@ class MazeVisualizer:
             return
 
     def _on_close(self, param: Any) -> None:
+        """Handle window close event.
+
+        Args:
+            param (Any): Unused MLX parameter.
+
+        Returns:
+            None
+        """
         self._cleanup()
 
     def run(self) -> None:
