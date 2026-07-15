@@ -167,7 +167,7 @@ AI(Gemini, Codex) was used to:
 ### Lessons Learned:
 - **What worked well**: Separating the parser, solver, generator, and visualizer modules allowed for seamless parallel development and clean integration.
 - **Changes from the original plan**: Since the 42 side changed the subject without notice after the initial registration, the new requirements came as a complete surprise.
-- **Improvements**: Optimizing visualizer frame-update throughput greatly improved responsiveness. Future iterations could benefit from adding more solving algorithms (such as A* or Dijkstra's).
+- **Improvements**: Optimizing visualizer frame-update throughput greatly improved responsiveness. Future iterations could benefit from adding more solving algorithms.
 
 ### Tools Used:
 - **`uv`**: Fast Python package installer and workspace manager.
