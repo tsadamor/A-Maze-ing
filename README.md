@@ -144,7 +144,7 @@ print("Solution Path:", path_coords)
 AI(Gemini, Codex) was used to:
 - Documentation Support
 - Conceputual Learning
-- Refactoring parser, the algorithm for Pac-Man playable maze
+- Refactoring parser, the algorithm for Pac-Man playable maze, and Visualization
 ---
 
 ## Team & Project Management
