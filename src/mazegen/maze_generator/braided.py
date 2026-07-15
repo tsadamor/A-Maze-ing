@@ -55,8 +55,8 @@ def generate_maze_pacman(
             - tuple: A tuple of (initial grid copy, list of step diffs).
     """
     algo_name = _ALGORITHM_NAMES[random.randint(0, len(_ALGORITHM_NAMES) - 1)]
-    algo = _ALGORITHMS.get(algo_name, generate_maze_dfs)
-    grid, (initial, diffs) = algo(width, height, entry)
+    generator = _ALGORITHMS.get(algo_name, generate_maze_dfs)
+    grid, (initial, diffs) = generator(width, height, entry)
     blocked_area = get_pattern_42(width, height)
     directions = [
         (DirectionMask.NORTH, DirectionMask.SOUTH, -1, 0),
