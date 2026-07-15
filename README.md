@@ -136,7 +136,7 @@ print("Solution Path:", path_coords)
 
 ## Resources
 - **DFS / Backtracking**: [Maze Generation Algorithms on Wikipedia](https://en.wikipedia.org/wiki/Maze_generation_algorithm), [The Bucksblog](https://www.jamisbuck.org/mazes/)
-- **MiniLibX (MLX)**: [42_MiniLibX_Python_Manual](https://github.com/dde-fite/42_MiniLibX_Python_Manual)
+- **MiniLibX (MLX)**: [42_MiniLibX_Python_Manual](https://github.com/SaraFreitas-dev/MLX-42lib-Helpfull-Documentation/blob/main/MLX_DOCUMENTATION.md)
 - **Pydantic**: [Pydantic Docs](https://pydantic.dev/docs/validation/latest/get-started/)
 - **uv**: [uv docs](https://docs.astral.sh/uv/)
 

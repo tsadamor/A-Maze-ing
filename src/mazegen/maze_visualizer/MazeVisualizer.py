@@ -84,10 +84,11 @@ class MazeVisualizer:
         )
         self.img = self.m.mlx_new_image(self.p, self.width, self.height)
 
-        img_data, bpp, line_size, _ = self.m.mlx_get_data_addr(self.img)
+        img_data, bpp, line_size, img_format = self.m.mlx_get_data_addr(self.img)
         self.img_data = img_data
         self.line_size = line_size
         self.bytes_per_pixel = bpp // 8
+        self.img_format = img_format
 
         if steps:
             self.anim_initial, self.anim_diffs = steps
@@ -145,7 +146,10 @@ class MazeVisualizer:
         Returns:
             None
         """
-        row_blank = b"\x00\x00\x00\xff" * self.width
+        if self.img_format == 0:
+            row_blank = b"\x00\x00\x00\xff" * self.width
+        else:
+            row_blank = b"\xff\x00\x00\x00" * self.width
         for y in range(self.height):
             idx = y * self.line_size
             self.img_data[
@@ -181,7 +185,10 @@ class MazeVisualizer:
         if start_x >= end_x or start_y >= end_y:
             return
 
-        color_bytes = bytes([b, g, r, 255])
+        if self.img_format == 0:
+            color_bytes = bytes([b, g, r, 255])
+        else:
+            color_bytes = bytes([255, r, g, b])
         row_segment = color_bytes * (end_x - start_x)
 
         for y in range(start_y, end_y):
@@ -281,7 +288,6 @@ class MazeVisualizer:
         text_y = self.height - 40
         msg = "[C]: Color [R]: Regenerate [P]: Path [Esc]: Exit"
         self.m.mlx_string_put(self.p, self.win, 50, text_y, 0xFFFFFF, msg)
-        self.m.mlx_do_sync(self.p)
 
     def _render_maze(
         self,
@@ -443,9 +449,6 @@ class MazeVisualizer:
             return
 
         self.m.mlx_loop_hook(self.p, self._on_loop, None)
-        if not self.anim_active:
-            self._render_maze(self.cm, self.show_path)
-
         self.m.mlx_key_hook(self.win, self._on_key, None)
         self.m.mlx_hook(self.win, 33, 0, self._on_close, None)
         self.m.mlx_loop(self.p)
