@@ -351,7 +351,6 @@ class MazeVisualizer:
                 exit_coord=self.config["EXIT"],
                 perfect=self.config["PERFECT"],
                 seed=self.config.get("SEED"),
-                algorithm=self.config.get("ALGORITHM")
             )
             new_maze, new_steps = gen.generate_maze()
             self.maze = new_maze

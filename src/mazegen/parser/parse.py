@@ -31,7 +31,6 @@ class MazeConfig(BaseModel):
     OUTPUT_FILE: str
     PERFECT: bool
     SEED: int | None = None
-    ALGORITHM: str | None = None
 
     @field_validator("WIDTH", mode="before")
     @classmethod

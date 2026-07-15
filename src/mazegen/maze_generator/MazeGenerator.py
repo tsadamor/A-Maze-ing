@@ -37,8 +37,7 @@ Example:
         entry=(0, 0),
         exit_coord=(14, 19),
         perfect=True,
-        seed=42,
-        algorithm="dfs"
+        seed=42
     )
 
     # Generate the grid structure
@@ -93,8 +92,6 @@ class MazeGenerator:
         perfect (bool): True to generate a perfect maze (no loops, single
             path), False to generate a braided playable maze.
         seed (int | None): Optional random seed for deterministic generation.
-        algorithm (str | None): Specific algorithm type ('dfs', 'pacman',
-            'wall_expand').
         maze (list[list[int]]): 2D list of integer wall masks. Each cell is
             represented by a 4-bit integer mask indicating closed walls:
                 - Bit 0 (val 1): North wall is closed
@@ -111,7 +108,6 @@ class MazeGenerator:
         exit_coord: tuple[int, int],
         perfect: bool = True,
         seed: int | None = None,
-        algorithm: str | None = None,
     ) -> None:
         """Initialize MazeGenerator with explicit parameters.
 
@@ -122,8 +118,6 @@ class MazeGenerator:
             exit_coord (tuple[int, int]): Exit coordinate as (row, col).
             perfect (bool): Whether to generate a perfect maze.
             seed (int | None): Optional random seed for reproducibility.
-            algorithm (str | None): Specific algorithm
-                ('dfs', 'pacman', 'wall_expand').
         """
         self.width = width
         self.height = height
@@ -131,7 +125,6 @@ class MazeGenerator:
         self.exit_coord = exit_coord
         self.perfect = perfect
         self.seed = seed
-        self.algorithm = algorithm
 
         self.maze: list[list[int]] = []
 

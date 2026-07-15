@@ -22,7 +22,6 @@ The program is driven by a `key=value` configuration file (default is `config.tx
 
 ### Optional Keys:
 - **`SEED`**: Integer seed value for reproducing random generations.
-- **`ALGORITHM`**: Specifies the generation algorithm (`dfs`, `pacman`, or `wall_expand`).
 
 #### Example `config.txt`:
 ```ini
@@ -33,7 +32,6 @@ EXIT=19,14
 OUTPUT_FILE=maze.txt
 PERFECT=True
 SEED=42
-ALGORITHM=dfs
 ```
 
 ---
@@ -120,8 +118,7 @@ generator = MazeGenerator(
     entry=(0, 0),
     exit_coord=(14, 19),
     perfect=True,
-    seed=42,
-    algorithm="dfs"
+    seed=42
 )
 
 # Generate maze grid structure

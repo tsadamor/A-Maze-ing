@@ -28,7 +28,6 @@ def main() -> None:
         exit_coord=ext,
         perfect=config["PERFECT"],
         seed=config.get("SEED"),
-        algorithm=config.get("ALGORITHM")
     )
     maze, steps = generator.generate_maze()
 
