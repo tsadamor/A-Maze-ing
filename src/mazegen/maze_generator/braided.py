@@ -9,14 +9,18 @@ from mazegen.utils import DirectionMask, get_pattern_42
 from .backtracking import generate_maze_dfs
 from .wall_expand import gen_maze_wall_expand
 
-_ALGORITHMS: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+MazeResult = tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]
+Algorithm = Callable[[int, int, tuple[int, int]], MazeResult]
+
+_ALGORITHMS: dict[str, Algorithm] = {
     "dfs": generate_maze_dfs,
     "wall_expand": gen_maze_wall_expand,
 }
-_ALGORITHM_NAMES: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+_ALGORITHM_NAMES: dict[int, str] = {
     0: "dfs",
     1: "wall_expand",
 }
+
 
 def _count_open_walls(mask: int) -> int:
     """Count number of open walls (0 bits) in a cell mask.
@@ -28,13 +32,16 @@ def _count_open_walls(mask: int) -> int:
         int: The number of open walls (0-bits) in the mask.
     """
     return sum(
-        1 for m in (
+        1
+        for m in (
             DirectionMask.NORTH,
             DirectionMask.EAST,
             DirectionMask.SOUTH,
-            DirectionMask.WEST
-        ) if (mask & m) == 0
+            DirectionMask.WEST,
+        )
+        if (mask & m) == 0
     )
+
 
 def generate_maze_pacman(
     width: int,

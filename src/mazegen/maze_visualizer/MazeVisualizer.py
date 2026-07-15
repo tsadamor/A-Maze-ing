@@ -60,18 +60,18 @@ class MazeVisualizer:
         self.available = True
         # Each theme defines colors for walls, landmarks, and the solved path.
         self.cmodes = [
-            ((126, 249, 255), (255, 92, 138), (145, 255, 174)),  # Cyan & Pink theme
-            ((89, 196, 255), (255, 204, 92), (77, 255, 218)),    # Sky blue & Yellow theme
-            ((255, 167, 92), (255, 80, 120), (255, 231, 128)),   # Orange & Pink theme
-            ((255, 183, 213), (255, 92, 147), (204, 178, 255)),  # Pink & Lavender theme
-            ((112, 224, 151), (255, 194, 92), (173, 255, 108)),  # Green & Orange theme
-            ((0, 240, 255), (255, 45, 190), (247, 255, 0)),      # Neon theme
-            ((190, 168, 255), (255, 145, 200), (132, 224, 255)), # Purple & Pink theme
-            ((255, 112, 67), (255, 213, 79), (255, 171, 145)),   # Coral & Yellow theme
-            ((185, 230, 255), (110, 168, 255), (225, 255, 255)), # Winter blue theme
-            ((128, 255, 214), (255, 148, 180), (211, 255, 140)), # Aqua & Lime theme
-            ((165, 148, 255), (255, 196, 82), (104, 214, 255)),  # Violet & Gold theme
-            ((224, 230, 238), (255, 105, 105), (112, 224, 178)), # Grey & Red theme
+            ((126, 249, 255), (255, 92, 138), (145, 255, 174)),
+            ((89, 196, 255), (255, 204, 92), (77, 255, 218)),
+            ((255, 167, 92), (255, 80, 120), (255, 231, 128)),
+            ((255, 183, 213), (255, 92, 147), (204, 178, 255)),
+            ((112, 224, 151), (255, 194, 92), (173, 255, 108)),
+            ((0, 240, 255), (255, 45, 190), (247, 255, 0)),
+            ((190, 168, 255), (255, 145, 200), (132, 224, 255)),
+            ((255, 112, 67), (255, 213, 79), (255, 171, 145)),
+            ((185, 230, 255), (110, 168, 255), (225, 255, 255)),
+            ((128, 255, 214), (255, 148, 180), (211, 255, 140)),
+            ((165, 148, 255), (255, 196, 82), (104, 214, 255)),
+            ((224, 230, 238), (255, 105, 105), (112, 224, 178)),
         ]
         self.cm = 0
         self.show_path = False
@@ -84,7 +84,9 @@ class MazeVisualizer:
         )
         self.img = self.m.mlx_new_image(self.p, self.width, self.height)
 
-        img_data, bpp, line_size, img_format = self.m.mlx_get_data_addr(self.img)
+        img_data, bpp, line_size, img_format = (
+            self.m.mlx_get_data_addr(self.img)
+        )
         self.img_data = img_data
         self.line_size = line_size
         self.bytes_per_pixel = bpp // 8
@@ -335,7 +337,7 @@ class MazeVisualizer:
         Returns:
             None
         """
-        key_esc= 65307
+        key_esc = 65307
         key_r = 114
         key_c = 99
         key_p = 112

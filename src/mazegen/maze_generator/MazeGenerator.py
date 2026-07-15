@@ -54,20 +54,22 @@ Example:
 import random
 import sys
 from collections.abc import Callable
+from typing import Any
 
 from .backtracking import generate_maze_dfs
 from .braided import generate_maze_pacman
 from .wall_expand import gen_maze_wall_expand
 
 # Mapping for extensible algorithm registration
-_ALGORITHMS: dict[
-    str, Callable[[int, int, tuple[int, int]], list[list[int]]]
-] = {
+MazeResult = tuple[list[list[int]], tuple[list[list[int]], list[list[Any]]]]
+Algorithm = Callable[[int, int, tuple[int, int]], MazeResult]
+
+_ALGORITHMS: dict[str, Algorithm] = {
     "dfs": generate_maze_dfs,
     "wall_expand": gen_maze_wall_expand,
     "pacman": generate_maze_pacman,
 }
-_ALGORITHM_NAMES: dict[str, Callable[[int, int, tuple[int, int]], list[list[int]]]] = {
+_ALGORITHM_NAMES: dict[int, str] = {
     0: "dfs",
     1: "wall_expand",
     2: "pacman",
@@ -81,7 +83,7 @@ class MazeGenerator:
     DFS or Wilson's Wall Expansion) or multi-route playable boards containing
     loops.
 
-    To instantiate, provide the explicit maze parameters (width, height, entry, exit, etc.).
+    To instantiate, provide explicit maze parameters such as width and height.
 
     Attributes:
         width (int): Maze width in cells (number of columns).
@@ -141,7 +143,7 @@ class MazeGenerator:
                 file=sys.stderr,
             )
 
-    def generate_maze(self) -> list[list[int]]:
+    def generate_maze(self) -> MazeResult:
         """Generate maze structure based on configuration.
 
         Returns:
@@ -155,8 +157,9 @@ class MazeGenerator:
         if not self.perfect:
             algo = "pacman"
         generator = _ALGORITHMS.get(algo, generate_maze_pacman)
-        self.maze = generator(self.width, self.height, self.entry)
-        return self.maze
+        result = generator(self.width, self.height, self.entry)
+        self.maze = result[0]
+        return result
 
     def get_maze(self) -> list[list[int]]:
         """Access generated maze structure, generating if needed.
@@ -167,4 +170,3 @@ class MazeGenerator:
         if not self.maze:
             self.generate_maze()
         return self.maze
-

@@ -1,5 +1,6 @@
 """Maze I/O module for saving to file."""
 
+
 def save_maze_to_file(
     maze: list[list[int]],
     output_file: str,

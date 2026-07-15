@@ -34,8 +34,16 @@ def main() -> None:
 
     solver = MazeSolver(maze, config["OUTPUT_FILE"], ent, ext, wid, hig)
     path_str = solver.solve_maze()
-    
-    save_maze_to_file(maze, config["OUTPUT_FILE"], wid, hig, ent, ext, path_str)
+
+    save_maze_to_file(
+        maze,
+        config["OUTPUT_FILE"],
+        wid,
+        hig,
+        ent,
+        ext,
+        path_str,
+    )
 
     visualizer = MazeVisualizer(maze, config, solver, steps=steps)
     visualizer.run()
