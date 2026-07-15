@@ -323,20 +323,26 @@ class MazeVisualizer:
         self.m.mlx_destroy_image(self.p, self.img)
         self.m.mlx_destroy_window(self.p, self.win)
         self.m.mlx_loop_exit(self.p)
+        self.m.mlx_release(self.p)
 
-    def _on_key(self, keynum: int, param: Any) -> None:
+    def _on_key(self, key: int, param: Any) -> None:
         """Handle keyboard events during the MLX event loop.
 
         Args:
-            keynum (int): The key code pressed.
+            key (int): The key code pressed.
             param (Any): Unused MLX parameter.
 
         Returns:
             None
         """
-        if keynum == 65307:  # Esc key: Exit application
+        key_esc= 65307
+        key_r = 114
+        key_c = 99
+        key_p = 112
+
+        if key == key_esc:  # Exit application
             self._cleanup()
-        elif keynum == 114:  # 'r' key: Regenerate maze
+        elif key == key_r:  # Regenerate maze
             gen = MazeGenerator(
                 width=self.config["WIDTH"],
                 height=self.config["HEIGHT"],
@@ -372,11 +378,11 @@ class MazeVisualizer:
                 path_str
             )
             self._update_solved_path()
-        elif keynum == 99:  # 'c' key: Change color theme
+        elif key == key_c:  # Change color theme
             if not self.anim_active:
                 self.cm = (self.cm + 1) % len(self.cmodes)
                 self._render_maze(self.cm, self.show_path)
-        elif keynum == 112:  # 'p' key: Toggle path visibility/animation
+        elif key == key_p:  # Toggle path visibility/animation
             if not self.anim_active and not self.path_anim_active:
                 if self.show_path:
                     self.show_path = False
