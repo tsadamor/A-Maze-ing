@@ -176,4 +176,3 @@ AI(Gemini, Codex) was used to:
 - **`uv`**: Fast Python package installer and workspace manager.
 - **`mypy` & `flake8`**: Strict type checking and code style validation.
 - **`mlx`**: Python bindings of MiniLibX for the interactive graphic window.
-- **`pyautogui`**: Window screen resolution helpers.
