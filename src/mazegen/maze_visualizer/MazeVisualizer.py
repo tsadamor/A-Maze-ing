@@ -325,7 +325,6 @@ class MazeVisualizer:
         self.m.mlx_destroy_image(self.p, self.img)
         self.m.mlx_destroy_window(self.p, self.win)
         self.m.mlx_loop_exit(self.p)
-        self.m.mlx_release(self.p)
 
     def _on_key(self, key: int, param: Any) -> None:
         """Handle keyboard events during the MLX event loop.
