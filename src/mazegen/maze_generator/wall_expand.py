@@ -142,10 +142,6 @@ def gen_maze_wall_expand(
                                     )
                                 )
 
-                        # Keep one wall segment per animation step. The path is
-                        # committed only after reaching an existing wall, but
-                        # replay it from its unconnected starting pillar toward
-                        # that wall instead of making it appear all at once.
                         diffs.append(diff)
 
                     for p in path_history:
