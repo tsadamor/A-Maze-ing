@@ -106,7 +106,7 @@ class MazeVisualizer:
         self.anim_active = bool(steps)
         self.rows = len(self.maze)
         self.cols = len(self.maze[0])
-        self.steps_per_frame = max(1, self.rows * self.cols // 30)
+        self.steps_per_frame = max(1, self.rows * self.cols // 100)
 
         self.pattern_cells = get_pattern_42(self.cols, self.rows)
         self.solved_path_cells: set[tuple[int, int]] = set()
