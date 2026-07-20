@@ -25,12 +25,12 @@ def gen_maze_wall_expand(
             - tuple: A tuple of (initial grid copy, list of step diffs).
     """
     maze = [[0] * width for _ in range(height)]
-    placed_pillars: set[tuple[int, int]] = set()
+    fixed_pillar: set[tuple[int, int]] = set()
 
     blocked_cells = get_pattern_42(width, height)
     if blocked_cells:
         for cy, cx in blocked_cells:
-            placed_pillars.update(
+            fixed_pillar.update(
                 [(cy, cx), (cy + 1, cx), (cy, cx + 1), (cy + 1, cx + 1)]
             )
             maze[cy][cx] = 15
@@ -47,12 +47,12 @@ def gen_maze_wall_expand(
     for w in range(width):
         maze[0][w] |= Direction.NORTH
         maze[height - 1][w] |= Direction.SOUTH
-        placed_pillars.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
+        fixed_pillar.update([(0, w), (0, w + 1), (height, w), (height, w + 1)])
 
     for h in range(height):
         maze[h][0] |= Direction.WEST
         maze[h][width - 1] |= Direction.EAST
-        placed_pillars.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
+        fixed_pillar.update([(h, 0), (h + 1, 0), (h, width), (h + 1, width)])
 
     initial = [row[:] for row in maze]
     diffs: list[list[Any]] = []
@@ -63,7 +63,7 @@ def gen_maze_wall_expand(
     while remaining:
         start_h, start_w = remaining.pop()
 
-        if (start_h, start_w) in placed_pillars:
+        if (start_h, start_w) in fixed_pillar:
             continue
 
         ph, pw = start_h, start_w
@@ -83,28 +83,64 @@ def gen_maze_wall_expand(
                 if (nh, nw) in path_history:
                     continue
 
-                temp_walls.append((ph, pw, nh, nw))
-                path_history.append((nh, nw))
+                temp_walls.append(
+                    (
+                        ph,
+                        pw,
+                        nh,
+                        nw,
+                    )
+                )
+                path_history.append(
+                    (
+                        nh,
+                        nw,
+                    )
+                )
 
-                if (nh, nw) in placed_pillars:
+                if (nh, nw) in fixed_pillar:
                     for fh, fw, th, tw in temp_walls:
                         diff = []
                         if fw == tw:
                             min_h = min(fh, th)
                             if fw > 0:
                                 maze[min_h][fw - 1] |= Direction.EAST
-                                diff.append((min_h, fw - 1, maze[min_h][fw - 1]))
+                                diff.append(
+                                    (
+                                        min_h,
+                                        fw - 1,
+                                        maze[min_h][fw - 1],
+                                    )
+                                )
                             if fw < width:
                                 maze[min_h][fw] |= Direction.WEST
-                                diff.append((min_h, fw, maze[min_h][fw]))
+                                diff.append(
+                                    (
+                                        min_h,
+                                        fw,
+                                        maze[min_h][fw],
+                                    )
+                                )
                         else:
                             min_w = min(fw, tw)
                             if fh > 0:
                                 maze[fh - 1][min_w] |= Direction.SOUTH
-                                diff.append((fh - 1, min_w, maze[fh - 1][min_w]))
+                                diff.append(
+                                    (
+                                        fh - 1,
+                                        min_w,
+                                        maze[fh - 1][min_w],
+                                    )
+                                )
                             if fh < height:
                                 maze[fh][min_w] |= Direction.NORTH
-                                diff.append((fh, min_w, maze[fh][min_w]))
+                                diff.append(
+                                    (
+                                        fh,
+                                        min_w,
+                                        maze[fh][min_w],
+                                    )
+                                )
 
                         # Keep one wall segment per animation step. The path is
                         # committed only after reaching an existing wall, but
@@ -113,7 +149,7 @@ def gen_maze_wall_expand(
                         diffs.append(diff)
 
                     for p in path_history:
-                        placed_pillars.add(p)
+                        fixed_pillar.add(p)
 
                     moved = True
                     break
@@ -122,7 +158,7 @@ def gen_maze_wall_expand(
                     moved = True
                     break
 
-            if not moved or (nh, nw) in placed_pillars:
+            if not moved or (nh, nw) in fixed_pillar:
                 break
 
     return maze, (initial, diffs)
